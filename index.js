@@ -2,14 +2,50 @@ const primaryChartColor = '#AAAAAA';
 const chartWidth = 600;
 const chartHeight = 500;
 const previewWidth = 600;
-const previewHeight = 100;
+const previewHeight = 200;
 const previewActiveAreaDefaultWidth = previewWidth / 4;
 
-class PreviewActiveArea {
+class ChartGraphic {
     constructor(element, data) {
+        this.data = data;
+        this.context = element.getContext("2d");
+    }
+
+    render() {
+        const lineIndex = 1;
+        const [name2, ...values2] = this.data.columns[lineIndex];
+
+        const strokeStyle = this.context.strokeStyle;
+        this.context.strokeStyle = this.data.colors[name2];
+
+        for (let index = 0; index < values2.length; index) {
+            const path = new Path2D();
+            path.moveTo(index * 5, values2[index]);
+            path.lineTo(++index * 5, values2[index]);
+
+            this.context.stroke(path);
+        }
+
+        this.context.strokeStyle = strokeStyle;
+    }
+}
+
+class Chart {
+    constructor(element, data) {
+        this.data = data;
+        this.context = element.getContext("2d");
+        this.chartGraphic = new ChartGraphic(element, data);
+    }
+
+    render() {
+        this.chartGraphic.render();
+    }
+}
+
+class PreviewActiveArea {
+    constructor(element) {
         this.element = element;
         this.context = element.getContext('2d');
-        this.data = data;
         this.dim = {
             width: previewActiveAreaDefaultWidth,
             height: previewHeight,
@@ -38,9 +74,9 @@ class PreviewActiveArea {
             this.dim.width,
             this.dim.height,
         );
-        if (this.context.isPointInPath(event.layerX, event.layerY)) {
+        if (this.context.isPointInPath(event.pageX - this.offset.left, event.pageY - this.offset.top)) {
             this.element.style.cursor = 'pointer';
-        } else if (this.element.style.cursor === 'pointer') {
+        } else {
             this.element.style.cursor = 'default';
         }
     }
@@ -84,37 +120,24 @@ class PreviewActiveArea {
 
 class ChartPreview {
     constructor(element, data) {
-        this.data = data;
         this.element = element;
         this.context = element.getContext("2d");
-        this.activeArea = new PreviewActiveArea(element, data);
+        this.activeArea = new PreviewActiveArea(element);
+        this.backgroundChart = new ChartGraphic(element, data);
     }
 
     render() {
         this.context.clearRect(0, 0, this.element.width, this.element.height);
 
-        this.renderBackground();
-        this.renderActiveArea();
-        this.renderOverlay();
-    }
-
-    renderBackground() {
-        const line = new Path2D();
-
-        line.moveTo(0, previewHeight / 2);
-        line.lineTo(this.element.width, previewHeight / 2);
-
-        this.context.stroke(line);
-    }
-
-    renderActiveArea() {
+        this.backgroundChart.render();
         this.activeArea.render();
+        this.renderOverlay();
     }
 
     renderOverlay() {
         const fillStyle = this.context.fillStyle;
 
-        this.context.fillStyle = "rgba(245, 249, 252, 0.9)";
+        this.context.fillStyle = "rgba(245, 249, 252, 0.7)";
         this.context.fillRect(
             0,
             0,
@@ -136,42 +159,34 @@ class ChartWidget {
     constructor(id, data) {
         this.chartContainer = document.getElementById(id);
         this.data = data;
+
+        this.title = document.createElement('h2');
+        this.title.innerText = 'Followers';
+
+        this.chart = document.createElement('canvas');
+        this.chart.id = 'chart';
+        this.chart.width = chartWidth;
+        this.chart.height = chartHeight;
+        this.chart.style.border = `1px solid ${primaryChartColor}`;
+
+        this.preview = document.createElement('canvas');
+        this.preview.id = 'preview';
+        this.preview.width = previewWidth;
+        this.preview.height = previewHeight;
+        this.preview.style.border = `1px solid ${primaryChartColor}`;
+
+        this.chartContainer.appendChild(this.title);
+        this.chartContainer.appendChild(this.chart);
+        this.chartContainer.appendChild(this.preview);
+
+        this.chart = new Chart(this.chart, this.data);
+        this.preview = new ChartPreview(this.preview, this.data);
     }
-
-    init() {
-        this.createElements();
-    }
-
-    createElements() {
-        const title = document.createElement('h2');
-        title.innerText = 'Followers';
-
-        const chart = document.createElement('canvas');
-        chart.id = 'chart';
-        chart.width = chartWidth;
-        chart.height = chartHeight;
-        chart.style.border = `1px solid ${primaryChartColor}`;
-
-        const preview = document.createElement('canvas');
-        preview.id = 'preview';
-        preview.width = previewWidth;
-        preview.height = previewHeight;
-        preview.style.border = `1px solid ${primaryChartColor}`;
-
-        this.chartContainer.appendChild(title);
-        this.chartContainer.appendChild(chart);
-        this.chartContainer.appendChild(preview);
-
-        this.chart = chart.getContext("2d");
-        this.preview = new ChartPreview(preview, this.data);
-    }
-
     show() {
-        this.init();
-
         setInterval(() => {
             //TODO here should be another mechanism of rendering!!!
             this.preview.render();
+            this.chart.render();
         }, 25);
     }
 }
