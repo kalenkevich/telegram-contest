@@ -474,6 +474,9 @@ class ChartLegend extends CanvasComponent {
     }
 }
 
+/**
+ * Class which manage buttons with lines of the Chart
+ */
 class ButtonsPanel extends Component {
     render() {
         let data = this.props.data;
