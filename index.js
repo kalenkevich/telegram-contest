@@ -77,10 +77,10 @@ class Utils {
     }
 
     static getScale(data, elementWidth, elementHeight) {
-        const [, ...otherColumn] = (data.columns || []).find(column => data.types[column[0]] !== X_AXIS_TYPE);
+        const column = (data.columns || []).find(column => data.types[column[0]] !== X_AXIS_TYPE) || [];
 
         return {
-            scaleX: elementWidth / otherColumn.length,
+            scaleX: elementWidth / column.length,
             scaleY: elementHeight / this.getMaxValueFromColumns(data),
         };
     }
@@ -93,7 +93,6 @@ class Utils {
 class Component {
     constructor(element, props = {}) {
         this.element = element;
-        this.context = element.getContext("2d");
         this.props = props;
         this.children = [];
         this.parent = null;
@@ -135,10 +134,16 @@ class Component {
     }
 }
 
+class CanvasComponent extends Component {
+    get context() {
+        return this.element.getContext("2d");
+    }
+}
+
 /**
  * Class for showing graphics itself (lines)
  */
-class ChartGraphic extends Component {
+class ChartGraphic extends CanvasComponent {
     init() {
         this.data = this.props.data;
     }
@@ -173,6 +178,8 @@ class ChartGraphic extends Component {
                 i++;
                 path.lineTo(i * scaleX, values[i] * scaleY);
 
+                this.context.lineWidth = this.props.lineWidth;
+
                 this.context.stroke(path);
             }
 
@@ -184,10 +191,11 @@ class ChartGraphic extends Component {
 /**
  * Class which manage graphic and axis
  */
-class Chart extends Component {
+class Chart extends CanvasComponent {
     init() {
         this.chartGraphic = new ChartGraphic(this.element, {
             data: this.props.data,
+            lineWidth: 2,
         });
 
         this.appendChild(this.chartGraphic);
@@ -201,8 +209,9 @@ class Chart extends Component {
 /**
  * Class which manage active view of legend of the Chart
  */
-class ChartLegendActiveArea extends Component {
+class ChartLegendActiveArea extends CanvasComponent {
     init() {
+        this.data = this.props.data;
         this.dim = {
             width: legendActiveAreaDefaultWidth,
             height: legendHeight,
@@ -374,15 +383,19 @@ class ChartLegendActiveArea extends Component {
         return newColumns;
     }
 
+    onDataChanged(data) {
+        this.data = data;
+        this.onActiveDataChange();
+    }
+
     onActiveDataChange() {
         this.rerender();
         const activeData = {
-            ...this.props.data,
-            columns: this.getActiveColumns(this.props.data, this.pos, this.dim),
+            ...this.data,
+            columns: this.getActiveColumns(this.data, this.pos, this.dim),
         };
 
-
-        this.props.onActiveDataChange(activeData);
+        this.props.onDataChange(activeData);
     }
 
     render() {
@@ -415,13 +428,21 @@ class ChartLegendActiveArea extends Component {
 /**
  * Class which manage legend of the Chart
  */
-class ChartLegend extends Component {
+class ChartLegend extends CanvasComponent {
     init() {
         this.activeArea = new ChartLegendActiveArea(this.element, this.props);
-        this.backgroundChart = new ChartGraphic(this.element, { data: this.props.data });
+        this.backgroundChart = new ChartGraphic(this.element, {
+            data: this.props.data,
+            lineWidth: 1,
+        });
 
         this.appendChild(this.activeArea);
         this.appendChild(this.backgroundChart);
+    }
+
+    onDataChanged(data) {
+        this.activeArea.onDataChanged(data);
+        this.backgroundChart.onDataChanged(data);
     }
 
     renderOverlay() {
@@ -453,6 +474,56 @@ class ChartLegend extends Component {
     }
 }
 
+class ButtonsPanel extends Component {
+    render() {
+        let data = this.props.data;
+
+        (this.props.data.columns || []).reduce((checkboxes, column) => {
+            const [name,] = column;
+
+            if (name !== X_AXIS_TYPE) {
+                const checkbox = document.createElement('input');
+                const label = document.createElement('label');
+                const wrapper = document.createElement('div');
+
+                checkbox.id = `checkbox-${name}`;
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+
+                label.for = checkbox.id;
+                label.innerText = this.props.data.names[name];
+
+                wrapper.style.marginRight = '10px';
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(label);
+
+                checkbox.onclick = () => {
+                    if (checkbox.checked) {
+                        const column = (this.props.data.columns || []).find(column => column[0] === name);
+
+                        data.columns.push(column);
+
+                        this.props.onDataChange(data);
+                    } else {
+                        data = {
+                            ...data,
+                            columns: (data.columns || []).filter(column => column[0] !== name),
+                        };
+
+                        this.props.onDataChange(data);
+                    }
+                };
+
+                checkboxes.push(wrapper);
+            }
+
+            return checkboxes;
+        }, []).forEach(checkbox => {
+            this.element.appendChild(checkbox);
+        });
+    }
+}
+
 /**
  * Class which manage canvas elements
  */
@@ -477,20 +548,33 @@ class ChartWidget {
         this.legend.style.border = `1px solid ${primaryChartColor}`;
         this.legend.style.display = 'block';
 
+        this.buttonsPanel = document.createElement('div');
+        this.buttonsPanel.style.display = 'flex';
+
         this.chartContainer.appendChild(this.title);
         this.chartContainer.appendChild(this.chart);
         this.chartContainer.appendChild(this.legend);
+        this.chartContainer.appendChild(this.buttonsPanel);
 
         this.chart = new Chart(this.chart, { data });
         this.legend = new ChartLegend(this.legend, {
             data,
-            onActiveDataChange: (data) => this.chart.onDataChanged(data),
+            onDataChange: (data) => {
+                this.chart.onDataChanged(data);
+            }
+        });
+        this.buttonsPanel = new ButtonsPanel(this.buttonsPanel, {
+            data,
+            onDataChange: (data) => {
+                this.legend.onDataChanged(data);
+            }
         });
     }
 
     show() {
         this.chart.render();
         this.legend.render();
+        this.buttonsPanel.render();
     }
 }
 
