@@ -1,4 +1,5 @@
 const primaryChartColor = '#AAAAAA';
+const pixelRatio = window.devicePixelRatio || 1;
 const chartWidth = 600;
 const chartHeight = 500;
 const legendWidth = 600;
@@ -134,6 +135,9 @@ class Component {
     }
 }
 
+/**
+ * Class for canvas component
+ */
 class CanvasComponent extends Component {
     get context() {
         return this.element.getContext("2d");
@@ -155,8 +159,6 @@ class ChartGraphic extends CanvasComponent {
     }
 
     render() {
-        this.clear();
-
         super.render();
 
         const { scaleX, scaleY } = Utils.getScale(this.data, this.element.width, this.element.height);
@@ -173,15 +175,12 @@ class ChartGraphic extends CanvasComponent {
 
             for (let i = 0; i < values.length;) {
                 const path = new Path2D();
-                const lineWidth = this.context.lineWidth;
-
                 path.moveTo(i * scaleX, this.element.height - values[i] * scaleY);
                 i++;
                 path.lineTo(i * scaleX, this.element.height - values[i] * scaleY);
 
                 this.context.lineWidth = this.props.lineWidth;
                 this.context.stroke(path);
-                this.context.lineWidth = lineWidth;
             }
 
             this.context.strokeStyle = strokeStyle;
@@ -189,6 +188,9 @@ class ChartGraphic extends CanvasComponent {
     }
 }
 
+/**
+ * Class for grid for chart
+ */
 class ChartGrid extends CanvasComponent {
     init() {
         this.data = this.props.data;
@@ -207,13 +209,11 @@ class ChartGrid extends CanvasComponent {
 
         for (let i = 0; i < 6; i++ ) {
             const path = new Path2D();
-            const fillStyle = this.context.fillStyle;
-            const strokeStyle = this.context.strokeStyle;
-            const font = this.context.font;
 
             this.context.fillStyle = primaryChartColor;
             this.context.strokeStyle = primaryChartColor;
-            this.context.font = "14px Arial";
+            this.context.font = "24px Arial";
+            this.context.lineWidth = 2;
 
             path.moveTo(0, stepHeight * i);
             path.lineTo(this.element.width, stepHeight * i);
@@ -223,9 +223,6 @@ class ChartGrid extends CanvasComponent {
 
             this.context.fillText(Math.floor(maxValue - stepValue * i), 0, stepHeight * i);
             this.context.stroke(path);
-            this.context.fillStyle = fillStyle;
-            this.context.strokeStyle = strokeStyle;
-            this.context.font = font;
         }
     }
 }
@@ -237,20 +234,25 @@ class Chart extends CanvasComponent {
     init() {
         this.chartGrid = new ChartGrid(this.element, {
             data: this.props.data,
-            lineWidth: 3,
         });
-
         this.chartGraphic = new ChartGraphic(this.element, {
             data: this.props.data,
+            lineWidth: 5,
         });
 
-        this.appendChild(this.chartGraphic);
         this.appendChild(this.chartGrid);
+        this.appendChild(this.chartGraphic);
     }
 
     onDataChanged(data) {
-        this.chartGraphic.onDataChanged(data);
         this.chartGrid.onDataChanged(data);
+        this.chartGraphic.onDataChanged(data);
+    }
+
+    render() {
+        this.clear();
+
+        super.render();
     }
 }
 
@@ -338,7 +340,8 @@ class ChartLegendActiveArea extends CanvasComponent {
 
         if (isLeftBorder) {
             const onMouseMove = (event) => {
-                let newPosX = event.pageX - this.offset.left - grabOffset.x;
+                const pageX = event.pageX;
+                let newPosX = pageX - this.offset.left - grabOffset.x;
 
                 if (newPosX < 0) {
                     newPosX = 0;
@@ -361,7 +364,8 @@ class ChartLegendActiveArea extends CanvasComponent {
             this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
         } else if (isRightBorder) {
             const onMouseMove = (event) => {
-                let newPosX = event.pageX - this.offset.left;
+                const pageX = event.pageX;
+                let newPosX = pageX - this.offset.left;
 
                 if (newPosX < this.pos.x + legendActiveAreaStretchBorderWidth * 3) {
                     newPosX = this.pos.x + legendActiveAreaStretchBorderWidth * 3;
@@ -379,7 +383,8 @@ class ChartLegendActiveArea extends CanvasComponent {
             this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
         } else if (isPreviewArea) {
             const onMouseMove = (event) => {
-                this.pos.x = event.pageX - this.offset.left - grabOffset.x;
+                const pageX = event.pageX;
+                this.pos.x = pageX- this.offset.left - grabOffset.x;
 
                 if (this.pos.x < 0) {
                     this.pos.x = 0;
@@ -388,6 +393,7 @@ class ChartLegendActiveArea extends CanvasComponent {
                 if (this.pos.x + this.dim.width > this.element.width) {
                     this.pos.x = this.element.width - this.dim.width;
                 }
+
                 this.onActiveDataChange();
             };
             this.element.addEventListener("mousemove", onMouseMove);
@@ -450,24 +456,25 @@ class ChartLegendActiveArea extends CanvasComponent {
         super.render();
 
         this.context.strokeRect(
-            this.pos.x,
-            this.pos.y,
-            this.dim.width,
-            this.dim.height,
+            this.pos.x * pixelRatio,
+            this.pos.y * pixelRatio,
+            this.dim.width * pixelRatio,
+            this.dim.height * pixelRatio,
         );
 
         const fillStyle = this.context.fillStyle;
+        this.context.fillStyle = primaryChartColor;
         this.context.fillRect(
-            this.pos.x,
-            this.pos.y,
-            legendActiveAreaStretchBorderWidth,
-            this.dim.height,
+            this.pos.x * pixelRatio,
+            this.pos.y * pixelRatio,
+            legendActiveAreaStretchBorderWidth * pixelRatio,
+            this.dim.height * pixelRatio,
         );
         this.context.fillRect(
-            this.pos.x + this.dim.width - legendActiveAreaStretchBorderWidth,
-            this.pos.y,
-            legendActiveAreaStretchBorderWidth,
-            this.dim.height,
+            (this.pos.x + this.dim.width - legendActiveAreaStretchBorderWidth)  * pixelRatio,
+            this.pos.y * pixelRatio,
+            legendActiveAreaStretchBorderWidth * pixelRatio,
+            this.dim.height * pixelRatio,
         );
         this.context.fillStyle = fillStyle;
     }
@@ -481,7 +488,7 @@ class ChartLegend extends CanvasComponent {
         this.activeArea = new ChartLegendActiveArea(this.element, this.props);
         this.backgroundChart = new ChartGraphic(this.element, {
             data: this.props.data,
-            lineWidth: 1,
+            lineWidth: 3,
         });
 
         this.appendChild(this.activeArea);
@@ -500,11 +507,11 @@ class ChartLegend extends CanvasComponent {
         this.context.fillRect(
             0,
             0,
-            this.activeArea.pos.x,
+            this.activeArea.pos.x * pixelRatio,
             this.element.height,
         );
         this.context.fillRect(
-            this.activeArea.pos.x + this.activeArea.dim.width,
+            (this.activeArea.pos.x + this.activeArea.dim.width) * pixelRatio,
             0,
             this.element.width,
             this.element.height,
@@ -584,18 +591,27 @@ class ChartWidget {
 
         this.title = document.createElement('h2');
         this.title.innerText = 'Followers';
+        this.title.style.fontFamily = 'Arial';
 
         this.chart = document.createElement('canvas');
         this.chart.id = 'chart';
-        this.chart.width = chartWidth;
-        this.chart.height = chartHeight;
+        this.chart.width = chartWidth * pixelRatio;
+        this.chart.height = chartHeight * pixelRatio;
+        this.chart.style.width = `${chartWidth}px`;
+        this.chart.style.height = `${chartHeight}px`;
+        this.chart.getContext('2d').mozImageSmoothingEnabled = false;
+        this.chart.getContext('2d').imageSmoothingEnabled = false;
         this.chart.style.border = `1px solid ${primaryChartColor}`;
         this.chart.style.display = 'block';
 
         this.legend = document.createElement('canvas');
         this.legend.id = 'legend';
-        this.legend.width = legendWidth;
-        this.legend.height = legendHeight;
+        this.legend.width = legendWidth * pixelRatio;
+        this.legend.height = legendHeight * pixelRatio;
+        this.legend.style.width = `${legendWidth}px`;
+        this.legend.style.height = `${legendHeight}px`;
+        this.legend.getContext('2d').mozImageSmoothingEnabled = false;
+        this.legend.getContext('2d').imageSmoothingEnabled = false;
         this.legend.style.border = `1px solid ${primaryChartColor}`;
         this.legend.style.display = 'block';
 
