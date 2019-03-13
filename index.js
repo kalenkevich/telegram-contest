@@ -5,28 +5,68 @@ const legendWidth = 600;
 const legendHeight = 100;
 const legendActiveAreaDefaultWidth = legendWidth / 4;
 const legendActiveAreaStretchBorderWidth = 5;
+const X_AXIS_TYPE = 'x';
+const THROTTLE_TIME_FOR_RENDER = 30;
 
 class Utils {
     static getMaxValueFromArray(array) {
         return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value);
     }
-}
 
-/**
- * Class for showing graphics itself (lines)
- */
-class ChartGraphic {
-    constructor(element, data) {
-        this.data = data;
-        this.element = element;
-        this.context = element.getContext("2d");
+    static throttle(func, ms) {
+        let isThrottled = false;
+        let savedArgs;
+        let savedThis;
+
+        function wrapper() {
+            if (isThrottled) {
+                savedArgs = arguments;
+                savedThis = this;
+                return;
+            }
+
+            func.apply(this, arguments);
+
+            isThrottled = true;
+
+            setTimeout(() => {
+                isThrottled = false;
+
+                if (savedArgs) {
+                    wrapper.apply(savedThis, savedArgs);
+                    savedArgs = savedThis = null;
+                }
+            }, ms);
+        }
+
+        return wrapper;
     }
 
-    getMaxValueFromColumns(columns) {
-        return (columns || []).reduce((maxValue, column) => {
+    static isLineIntersectRectangle(x1, y1, x2, y2, minX, minY, maxX, maxY) {
+        if ((x1 <= minX && x2 <= minX) || (y1 <= minY && y2 <= minY) || (x1 >= maxX && x2 >= maxX) || (y1 >= maxY && y2 >= maxY))
+        return false;
+
+        let m = (y2 - y1) / (x2 - x1);
+
+        let y = m * (minX - x1) + y1;
+        if (y > minY && y < maxY) return true;
+
+        y = m * (maxX - x1) + y1;
+        if (y > minY && y < maxY) return true;
+
+        let x = (minY - y1) / m + x1;
+        if (x > minX && x < maxX) return true;
+
+        x = (maxY - y1) / m + x1;
+
+        return x > minX && x < maxX;
+    }
+
+    static getMaxValueFromColumns(data) {
+        return (data.columns || []).reduce((maxValue, column) => {
             const [name, ...values] = column;
 
-            if (this.data.types[name] === "x") {
+            if (data.types[name] === X_AXIS_TYPE) {
                 return;
             }
 
@@ -36,26 +76,102 @@ class ChartGraphic {
         }, 0);
     }
 
+    static getScale(data, elementWidth, elementHeight) {
+        const [, ...otherColumn] = (data.columns || []).find(column => data.types[column[0]] !== X_AXIS_TYPE);
+
+        return {
+            scaleX: elementWidth / otherColumn.length,
+            scaleY: elementHeight / this.getMaxValueFromColumns(data),
+        };
+    }
+}
+
+/**
+ * Base component which is element of the components tree,
+ * where can be access to parents and children
+ */
+class Component {
+    constructor(element, props = {}) {
+        this.element = element;
+        this.context = element.getContext("2d");
+        this.props = props;
+        this.children = [];
+        this.parent = null;
+        this.render = Utils.throttle(this.render.bind(this), THROTTLE_TIME_FOR_RENDER);
+        this.init();
+    }
+
+    appendChild(child) {
+        this.children.push(child);
+        child.parent = this;
+    }
+
+    init() {}
+
     render() {
-        const [, ...xAxis] = (this.data.columns || []).find(column => this.data.types[column[0]] === "x");
-        const scaleX = this.element.width / xAxis.length;
-        const scaleY = this.element.height / this.getMaxValueFromColumns(this.data.columns);
+        this.children.forEach(child => child.render());
+    }
+
+    clear() {
+        this.context.clearRect(0, 0, this.element.width, this.element.height);
+    }
+
+    //Todo do it more effective, now for every child it will render from root parent
+    rerender() {
+        let currentParent = this.parent;
+
+        if (!currentParent) {
+            return this.render();
+        }
+
+        let nextParent = this.parent.parent;
+
+        while (nextParent !== null) {
+            currentParent = nextParent;
+            nextParent = currentParent.parent;
+        }
+
+        currentParent.render();
+    }
+}
+
+/**
+ * Class for showing graphics itself (lines)
+ */
+class ChartGraphic extends Component {
+    init() {
+        this.data = this.props.data;
+    }
+
+    onDataChanged(data) {
+        this.data = data;
+
+        this.rerender();
+    }
+
+    render() {
+        this.clear();
+
+        super.render();
+
+        const { scaleX, scaleY } = Utils.getScale(this.data, this.element.width, this.element.height);
 
         (this.data.columns || []).forEach((column, index) => {
             const [name, ...values] = this.data.columns[index];
 
-            if (this.data.types[name] === "x") {
+            if (this.data.types[name] === X_AXIS_TYPE) {
                 return;
             }
 
             const strokeStyle = this.context.strokeStyle;
             this.context.strokeStyle = this.data.colors[name];
 
-            for (let index = 0; index < values.length;) {
+            for (let i = 0; i < values.length;) {
                 const path = new Path2D();
-                path.moveTo(index * scaleX, values[index] * scaleY);
-                index++;
-                path.lineTo(index * scaleX, values[index] * scaleY);
+
+                path.moveTo(i * scaleX, values[i] * scaleY);
+                i++;
+                path.lineTo(i * scaleX, values[i] * scaleY);
 
                 this.context.stroke(path);
             }
@@ -68,25 +184,25 @@ class ChartGraphic {
 /**
  * Class which manage graphic and axis
  */
-class Chart {
-    constructor(element, data) {
-        this.data = data;
-        this.context = element.getContext("2d");
-        this.chartGraphic = new ChartGraphic(element, data);
+class Chart extends Component {
+    init() {
+        this.chartGraphic = new ChartGraphic(this.element, {
+            data: this.props.data,
+        });
+
+        this.appendChild(this.chartGraphic);
     }
 
-    render(activeArea) {
-        this.chartGraphic.render();
+    onDataChanged(data) {
+        this.chartGraphic.onDataChanged(data);
     }
 }
 
 /**
  * Class which manage active view of legend of the Chart
  */
-class ChartLegendActiveArea {
-    constructor(element) {
-        this.element = element;
-        this.context = element.getContext('2d');
+class ChartLegendActiveArea extends Component {
+    init() {
         this.dim = {
             width: legendActiveAreaDefaultWidth,
             height: legendHeight,
@@ -96,16 +212,18 @@ class ChartLegendActiveArea {
             y: 0,
         };
         this.offset = {
-            left: element.offsetLeft,
-            top: element.offsetTop,
-            width: element.offsetWidth,
-            height: element.offsetHeight,
+            left: this.element.offsetLeft,
+            top: this.element.offsetTop,
+            width: this.element.offsetWidth,
+            height: this.element.offsetHeight,
         };
 
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseMove = this.onMouseMove.bind(this);
         this.element.addEventListener("mousedown", this.onMouseDown);
         this.element.addEventListener("mousemove", this.onMouseMove);
+
+        this.onActiveDataChange();
     }
 
     getMouseAlignmentData(pageX, pageY) {
@@ -179,15 +297,12 @@ class ChartLegendActiveArea {
 
                 this.dim.width += this.pos.x - newPosX;
                 this.pos.x = newPosX;
+                this.onActiveDataChange();
             };
 
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
-
-            return;
-        }
-
-        if (isRightBorder) {
+        } else if (isRightBorder) {
             const onMouseMove = (event) => {
                 let newPosX = event.pageX - this.offset.left;
 
@@ -200,15 +315,12 @@ class ChartLegendActiveArea {
                 }
 
                 this.dim.width = newPosX - this.pos.x;
+                this.onActiveDataChange();
             };
 
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
-
-            return;
-        }
-
-        if (isPreviewArea) {
+        } else if (isPreviewArea) {
             const onMouseMove = (event) => {
                 this.pos.x = event.pageX - this.offset.left - grabOffset.x;
 
@@ -219,19 +331,71 @@ class ChartLegendActiveArea {
                 if (this.pos.x + this.dim.width > this.element.width) {
                     this.pos.x = this.element.width - this.dim.width;
                 }
+                this.onActiveDataChange();
             };
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
         }
     }
 
+    getActiveColumns(data, position, dimension) {
+        const newColumns = [];
+        const { scaleX, scaleY } = Utils.getScale(data, this.element.width, this.element.height);
+
+        (data.columns || []).forEach((column, index) => {
+            const name = column[0];
+
+            if (name === X_AXIS_TYPE) {
+                newColumns.push(column);
+
+                return;
+            }
+
+            newColumns.push([name]);
+
+            for (let i = 1; i < column.length;) {
+                const isLineIntersectRectangle = Utils.isLineIntersectRectangle(
+                    i * scaleX,
+                    column[i] * scaleY,
+                    ++i * scaleX,
+                    column[i] * scaleY,
+                    position.x,
+                    position.y,
+                    position.x + dimension.width,
+                    position.y + dimension.height,
+                );
+
+                if (isLineIntersectRectangle) {
+                    newColumns[index].push(column[i]);
+                }
+            }
+        });
+
+        return newColumns;
+    }
+
+    onActiveDataChange() {
+        this.rerender();
+        const activeData = {
+            ...this.props.data,
+            columns: this.getActiveColumns(this.props.data, this.pos, this.dim),
+        };
+
+
+        this.props.onActiveDataChange(activeData);
+    }
+
     render() {
+        super.render();
+
         this.context.strokeRect(
             this.pos.x,
             this.pos.y,
             this.dim.width,
             this.dim.height,
         );
+
+        const fillStyle = this.context.fillStyle;
         this.context.fillRect(
             this.pos.x,
             this.pos.y,
@@ -244,26 +408,20 @@ class ChartLegendActiveArea {
             legendActiveAreaStretchBorderWidth,
             this.dim.height,
         );
+        this.context.fillStyle = fillStyle;
     }
 }
 
 /**
  * Class which manage legend of the Chart
  */
-class ChartLegend {
-    constructor(element, data) {
-        this.element = element;
-        this.context = element.getContext("2d");
-        this.activeArea = new ChartLegendActiveArea(element);
-        this.backgroundChart = new ChartGraphic(element, data);
-    }
+class ChartLegend extends Component {
+    init() {
+        this.activeArea = new ChartLegendActiveArea(this.element, this.props);
+        this.backgroundChart = new ChartGraphic(this.element, { data: this.props.data });
 
-    render() {
-        this.context.clearRect(0, 0, this.element.width, this.element.height);
-
-        this.backgroundChart.render();
-        this.activeArea.render();
-        this.renderOverlay();
+        this.appendChild(this.activeArea);
+        this.appendChild(this.backgroundChart);
     }
 
     renderOverlay() {
@@ -285,8 +443,15 @@ class ChartLegend {
 
         this.context.fillStyle = fillStyle;
     }
-}
 
+    render() {
+        this.clear();
+
+        super.render();
+
+        this.renderOverlay();
+    }
+}
 
 /**
  * Class which manage canvas elements
@@ -294,7 +459,6 @@ class ChartLegend {
 class ChartWidget {
     constructor(id, data) {
         this.chartContainer = document.getElementById(id);
-        this.data = data;
 
         this.title = document.createElement('h2');
         this.title.innerText = 'Followers';
@@ -304,30 +468,31 @@ class ChartWidget {
         this.chart.width = chartWidth;
         this.chart.height = chartHeight;
         this.chart.style.border = `1px solid ${primaryChartColor}`;
+        this.chart.style.display = 'block';
 
         this.legend = document.createElement('canvas');
         this.legend.id = 'legend';
         this.legend.width = legendWidth;
         this.legend.height = legendHeight;
         this.legend.style.border = `1px solid ${primaryChartColor}`;
+        this.legend.style.display = 'block';
 
         this.chartContainer.appendChild(this.title);
         this.chartContainer.appendChild(this.chart);
         this.chartContainer.appendChild(this.legend);
 
-        this.chart = new Chart(this.chart, this.data);
-        this.legend = new ChartLegend(this.legend, this.data);
+        this.chart = new Chart(this.chart, { data });
+        this.legend = new ChartLegend(this.legend, {
+            data,
+            onActiveDataChange: (data) => this.chart.onDataChanged(data),
+        });
     }
 
     show() {
-        setInterval(() => {
-            //TODO here should be another mechanism of rendering!!!
-            this.legend.render();
-            this.chart.render(this.legend.activeArea);
-        }, 25);
+        this.chart.render();
+        this.legend.render();
     }
 }
-
 
 window.onload = async function () {
     const data = await fetch('chart_data.json').then(data => data.json());
