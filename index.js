@@ -8,6 +8,7 @@ const legendActiveAreaDefaultWidth = legendWidth / 4;
 const legendActiveAreaStretchBorderWidth = 5;
 const X_AXIS_TYPE = 'x';
 const THROTTLE_TIME_FOR_RENDER = 10;
+const CANVAS_PADDING_CHART = 10;
 
 class Utils {
     static getMaxValueFromArray(array) {
@@ -144,6 +145,77 @@ class CanvasComponent extends Component {
     }
 }
 
+class ChartPopover extends CanvasComponent {
+    init() {
+        this.data = this.props.data;
+        this.pos = {
+            x: null,
+            y: null,
+        };
+        this.offset = {
+            left: this.element.offsetLeft,
+            top: this.element.offsetTop,
+            width: this.element.offsetWidth,
+            height: this.element.offsetHeight,
+        };
+        this.dim = {
+            width: this.element.width,
+            height: this.element.height,
+        };
+
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.element.addEventListener("mousemove", this.onMouseMove);
+    }
+
+    onDataChanged(data) {
+        this.data = data;
+    }
+
+    getMouseAlignmentData(pageX, pageY) {
+        const grabOffset = {
+            x: pageX - this.offset.left,
+            y: pageY - this.offset.top,
+        };
+
+        const isChartArea = grabOffset.x >= legendActiveAreaStretchBorderWidth
+            && grabOffset.x <= this.dim.width - legendActiveAreaStretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= this.dim.height;
+
+        return {
+            grabOffset,
+            isChartArea,
+        };
+    }
+
+    onMouseMove(event) {
+        const { isChartArea, grabOffset } = this.getMouseAlignmentData(event.pageX, event.pageY);
+
+        if (isChartArea) {
+            this.pos.x = grabOffset.x;
+            this.pos.y = grabOffset.y;
+        } else {
+            this.pos.x = null;
+            this.pos.y = null;
+        }
+
+        this.rerender();
+    }
+
+    render() {
+        super.render();
+
+        if (this.pos.x) {
+            const path = new Path2D();
+
+            path.moveTo(this.pos.x * pixelRatio, 0);
+            path.lineTo(this.pos.x * pixelRatio, this.dim.height);
+
+            this.context.stroke(path);
+        }
+    }
+}
+
 /**
  * Class for showing graphics itself (lines)
  */
@@ -175,12 +247,15 @@ class ChartGraphic extends CanvasComponent {
 
             for (let i = 0; i < values.length;) {
                 const path = new Path2D();
-                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY);
+                const lineWidth = this.context.lineWidth;
+
+                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY + CANVAS_PADDING_CHART);
                 i++;
-                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY);
+                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY + CANVAS_PADDING_CHART);
 
                 this.context.lineWidth = this.props.lineWidth;
                 this.context.stroke(path);
+                this.context.lineWidth = lineWidth;
             }
 
             this.context.strokeStyle = strokeStyle;
@@ -212,7 +287,7 @@ class ChartGrid extends CanvasComponent {
 
             this.context.fillStyle = primaryChartColor;
             this.context.strokeStyle = primaryChartColor;
-            this.context.font = "24px Arial";
+            this.context.font = "28px Arial";
             this.context.lineWidth = 2;
 
             path.moveTo(0, stepHeight * i);
@@ -221,7 +296,7 @@ class ChartGrid extends CanvasComponent {
             path.moveTo(0, stepHeight * i);
             path.lineTo(this.element.width, stepHeight * i);
 
-            this.context.fillText(Math.floor(maxValue - stepValue * i), 0, stepHeight * i);
+            this.context.fillText(Math.floor(maxValue - stepValue * i || 0), 10, stepHeight * i - 10);
             this.context.stroke(path);
         }
     }
@@ -240,13 +315,20 @@ class Chart extends CanvasComponent {
             lineWidth: 5,
         });
 
+        this.chartPopover = new ChartPopover(this.element, {
+            data: this.props.data,
+            lineWidth: 1,
+        });
+
         this.appendChild(this.chartGrid);
         this.appendChild(this.chartGraphic);
+        this.appendChild(this.chartPopover);
     }
 
     onDataChanged(data) {
         this.chartGrid.onDataChanged(data);
         this.chartGraphic.onDataChanged(data);
+        this.chartPopover.onDataChanged(data);
     }
 
     render() {
@@ -422,10 +504,10 @@ class ChartLegendActiveArea extends CanvasComponent {
                     column[i] * scaleY,
                     ++i * scaleX,
                     column[i] * scaleY,
-                    position.x,
-                    position.y,
-                    position.x + dimension.width,
-                    position.y + dimension.height,
+                    position.x * pixelRatio,
+                    position.y * pixelRatio,
+                    (position.x + dimension.width) * pixelRatio,
+                    (position.y + dimension.height) * pixelRatio,
                 );
 
                 if (isLineIntersectRectangle) {
@@ -614,6 +696,7 @@ class ChartWidget {
         this.legend.getContext('2d').imageSmoothingEnabled = false;
         this.legend.style.border = `1px solid ${primaryChartColor}`;
         this.legend.style.display = 'block';
+        this.legend.style.marginTop = '40px';
 
         this.buttonsPanel = document.createElement('div');
         this.buttonsPanel.style.display = 'flex';
