@@ -6,7 +6,7 @@ const legendHeight = 100;
 const legendActiveAreaDefaultWidth = legendWidth / 4;
 const legendActiveAreaStretchBorderWidth = 5;
 const X_AXIS_TYPE = 'x';
-const THROTTLE_TIME_FOR_RENDER = 30;
+const THROTTLE_TIME_FOR_RENDER = 10;
 
 class Utils {
     static getMaxValueFromArray(array) {
@@ -173,18 +173,60 @@ class ChartGraphic extends CanvasComponent {
 
             for (let i = 0; i < values.length;) {
                 const path = new Path2D();
+                const lineWidth = this.context.lineWidth;
 
-                path.moveTo(i * scaleX, values[i] * scaleY);
+                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY);
                 i++;
-                path.lineTo(i * scaleX, values[i] * scaleY);
+                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY);
 
                 this.context.lineWidth = this.props.lineWidth;
-
                 this.context.stroke(path);
+                this.context.lineWidth = lineWidth;
             }
 
             this.context.strokeStyle = strokeStyle;
         });
+    }
+}
+
+class ChartGrid extends CanvasComponent {
+    init() {
+        this.data = this.props.data;
+    }
+
+    onDataChanged(data) {
+        this.data = data;
+    }
+
+    render() {
+        super.render();
+
+        const maxValue = Utils.getMaxValueFromColumns(this.data);
+        const stepHeight = this.element.height / 6;
+        const stepValue = maxValue / 6;
+
+        for (let i = 0; i < 6; i++ ) {
+            const path = new Path2D();
+            const fillStyle = this.context.fillStyle;
+            const strokeStyle = this.context.strokeStyle;
+            const font = this.context.font;
+
+            this.context.fillStyle = primaryChartColor;
+            this.context.strokeStyle = primaryChartColor;
+            this.context.font = "14px Arial";
+
+            path.moveTo(0, stepHeight * i);
+            path.lineTo(this.element.width, stepHeight * i);
+
+            path.moveTo(0, stepHeight * i);
+            path.lineTo(this.element.width, stepHeight * i);
+
+            this.context.fillText(Math.floor(maxValue - stepValue * i), 0, stepHeight * i);
+            this.context.stroke(path);
+            this.context.fillStyle = fillStyle;
+            this.context.strokeStyle = strokeStyle;
+            this.context.font = font;
+        }
     }
 }
 
@@ -193,16 +235,22 @@ class ChartGraphic extends CanvasComponent {
  */
 class Chart extends CanvasComponent {
     init() {
+        this.chartGrid = new ChartGrid(this.element, {
+            data: this.props.data,
+            lineWidth: 3,
+        });
+
         this.chartGraphic = new ChartGraphic(this.element, {
             data: this.props.data,
-            lineWidth: 2,
         });
 
         this.appendChild(this.chartGraphic);
+        this.appendChild(this.chartGrid);
     }
 
     onDataChanged(data) {
         this.chartGraphic.onDataChanged(data);
+        this.chartGrid.onDataChanged(data);
     }
 }
 
