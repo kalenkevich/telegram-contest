@@ -4,6 +4,7 @@ const chartHeight = 500;
 const previewWidth = 600;
 const previewHeight = 200;
 const previewActiveAreaDefaultWidth = previewWidth / 4;
+const previewActiveAreaStretchBorderWidth = 5;
 
 class ChartGraphic {
     constructor(element, data) {
@@ -37,7 +38,7 @@ class Chart {
         this.chartGraphic = new ChartGraphic(element, data);
     }
 
-    render() {
+    render(activeArea) {
         this.chartGraphic.render();
     }
 }
@@ -67,31 +68,107 @@ class PreviewActiveArea {
         this.element.addEventListener("mousemove", this.onMouseMove);
     }
 
+    getMouseAlignmentData(pageX, pageY) {
+        const grabOffset = {
+            x: pageX - this.offset.left - this.pos.x,
+            y: pageY - this.offset.top - this.pos.y,
+        };
+
+        const isLeftBorder = grabOffset.x >= 0
+            && grabOffset.x <= previewActiveAreaStretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= this.dim.height;
+
+        const isRightBorder = grabOffset.x <= this.dim.width
+            && this.dim.width - grabOffset.x <= previewActiveAreaStretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= this.dim.height;
+
+        const isPreviewArea = grabOffset.x >= previewActiveAreaStretchBorderWidth
+            && grabOffset.x <= this.dim.width - previewActiveAreaStretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= this.dim.height;
+
+        return {
+            grabOffset,
+            isLeftBorder,
+            isRightBorder,
+            isPreviewArea,
+        };
+    }
+
     onMouseMove(event) {
-        this.context.rect(
-            this.pos.x,
-            this.pos.y,
-            this.dim.width,
-            this.dim.height,
-        );
-        if (this.context.isPointInPath(event.pageX - this.offset.left, event.pageY - this.offset.top)) {
+        const {
+            isLeftBorder,
+            isRightBorder,
+            isPreviewArea,
+        } = this.getMouseAlignmentData(event.pageX, event.pageY);
+
+        if (isPreviewArea) {
             this.element.style.cursor = 'pointer';
+        } else if (isLeftBorder || isRightBorder) {
+            this.element.style.cursor = 'ew-resize';
         } else {
             this.element.style.cursor = 'default';
         }
     }
 
     onMouseDown(event) {
-        const grabOffset = {
-            x: event.pageX - this.offset.left - this.pos.x,
-            y: event.pageY - this.offset.top - this.pos.y
-        };
+        const {
+            grabOffset,
+            isLeftBorder,
+            isRightBorder,
+            isPreviewArea,
+        } = this.getMouseAlignmentData(event.pageX, event.pageY);
 
-        if (   grabOffset.x >= 0
-            && grabOffset.x <= this.dim.width
-            && grabOffset.y >= 0
-            && grabOffset.x <= this.dim.height
-        ) {
+        if (isLeftBorder) {
+            const onMouseMove = (event) => {
+                let newPosX = event.pageX - this.offset.left - grabOffset.x;
+
+                if (newPosX < 0) {
+                    newPosX = 0;
+                }
+
+                if (newPosX > this.pos.x + this.dim.width - previewActiveAreaStretchBorderWidth * 3) {
+                    newPosX = this.dim.width + this.pos.x - previewActiveAreaStretchBorderWidth * 3;
+                }
+
+                if (newPosX + this.dim.width > this.element.width) {
+                    newPosX = this.element.width - this.dim.width;
+                }
+
+                this.dim.width += this.pos.x - newPosX;
+                this.pos.x = newPosX;
+            };
+
+            this.element.addEventListener("mousemove", onMouseMove);
+            this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
+
+            return;
+        }
+
+        if (isRightBorder) {
+            const onMouseMove = (event) => {
+                let newPosX = event.pageX - this.offset.left;
+
+                if (newPosX < this.pos.x + previewActiveAreaStretchBorderWidth * 3) {
+                    newPosX = this.pos.x + previewActiveAreaStretchBorderWidth * 3;
+                }
+
+                if (newPosX > this.element.width) {
+                    newPosX = this.element.width;
+                }
+
+                this.dim.width = newPosX - this.pos.x;
+            };
+
+            this.element.addEventListener("mousemove", onMouseMove);
+            this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
+
+            return;
+        }
+
+        if (isPreviewArea) {
             const onMouseMove = (event) => {
                 this.pos.x = event.pageX - this.offset.left - grabOffset.x;
 
@@ -113,6 +190,18 @@ class PreviewActiveArea {
             this.pos.x,
             this.pos.y,
             this.dim.width,
+            this.dim.height,
+        );
+        this.context.fillRect(
+            this.pos.x,
+            this.pos.y,
+            previewActiveAreaStretchBorderWidth,
+            this.dim.height,
+        );
+        this.context.fillRect(
+            this.pos.x + this.dim.width - previewActiveAreaStretchBorderWidth,
+            this.pos.y,
+            previewActiveAreaStretchBorderWidth,
             this.dim.height,
         );
     }
@@ -186,7 +275,7 @@ class ChartWidget {
         setInterval(() => {
             //TODO here should be another mechanism of rendering!!!
             this.preview.render();
-            this.chart.render();
+            this.chart.render(this.preview.activeArea);
         }, 25);
     }
 }
