@@ -5,49 +5,18 @@ const previewWidth = 600;
 const previewHeight = 100;
 const previewActiveAreaDefaultWidth = previewWidth / 4;
 
-const throttle = function(func, ms) {
-    let isThrottled = false,
-        savedArgs,
-        savedThis;
-
-    function wrapper() {
-
-        if (isThrottled) { // (2)
-            savedArgs = arguments;
-            savedThis = this;
-            return;
-        }
-
-        func.apply(this, arguments); // (1)
-
-        isThrottled = true;
-
-        setTimeout(function() {
-            isThrottled = false; // (3)
-            if (savedArgs) {
-                wrapper.apply(savedThis, savedArgs);
-                savedArgs = savedThis = null;
-            }
-        }, ms);
-    }
-
-    return wrapper;
-};
-
 class PreviewActiveArea {
     constructor(element, data) {
         this.element = element;
         this.context = element.getContext('2d');
         this.data = data;
-        this.activeArea = {
-            dim: {
-                width: previewActiveAreaDefaultWidth,
-                height: previewHeight,
-            },
-            pos: {
-                x: previewWidth - previewActiveAreaDefaultWidth * 2,
-                y: 0,
-            },
+        this.dim = {
+            width: previewActiveAreaDefaultWidth,
+            height: previewHeight,
+        };
+        this.pos = {
+            x: previewWidth - previewActiveAreaDefaultWidth * 2,
+            y: 0,
         };
         this.offset = {
             left: element.offsetLeft,
@@ -64,10 +33,10 @@ class PreviewActiveArea {
 
     onMouseMove(event) {
         this.context.rect(
-            this.activeArea.pos.x,
-            this.activeArea.pos.y,
-            this.activeArea.dim.width,
-            this.activeArea.dim.height,
+            this.pos.x,
+            this.pos.y,
+            this.dim.width,
+            this.dim.height,
         );
         if (this.context.isPointInPath(event.layerX, event.layerY)) {
             this.element.style.cursor = 'pointer';
@@ -78,24 +47,24 @@ class PreviewActiveArea {
 
     onMouseDown(event) {
         const grabOffset = {
-            x: event.pageX - this.offset.left - this.activeArea.pos.x,
-            y: event.pageY - this.offset.top - this.activeArea.pos.y
+            x: event.pageX - this.offset.left - this.pos.x,
+            y: event.pageY - this.offset.top - this.pos.y
         };
 
         if (   grabOffset.x >= 0
-            && grabOffset.x <= this.activeArea.dim.width
+            && grabOffset.x <= this.dim.width
             && grabOffset.y >= 0
-            && grabOffset.x <= this.activeArea.dim.height
+            && grabOffset.x <= this.dim.height
         ) {
             const onMouseMove = (event) => {
-                this.activeArea.pos.x = event.pageX - this.offset.left - grabOffset.x;
+                this.pos.x = event.pageX - this.offset.left - grabOffset.x;
 
-                if (this.activeArea.pos.x < 0) {
-                    this.activeArea.pos.x = 0;
+                if (this.pos.x < 0) {
+                    this.pos.x = 0;
                 }
 
-                if (this.activeArea.pos.x + this.activeArea.dim.width > this.element.width) {
-                    this.activeArea.pos.x = this.element.width - this.activeArea.dim.width;
+                if (this.pos.x + this.dim.width > this.element.width) {
+                    this.pos.x = this.element.width - this.dim.width;
                 }
             };
             this.element.addEventListener("mousemove", onMouseMove);
@@ -105,10 +74,10 @@ class PreviewActiveArea {
 
     render() {
         this.context.strokeRect(
-            this.activeArea.pos.x,
-            this.activeArea.pos.y,
-            this.activeArea.dim.width,
-            this.activeArea.dim.height,
+            this.pos.x,
+            this.pos.y,
+            this.dim.width,
+            this.dim.height,
         );
     }
 }
@@ -124,17 +93,42 @@ class ChartPreview {
     render() {
         this.context.clearRect(0, 0, this.element.width, this.element.height);
 
-        this.renderBackground(this.data);
-        this.activeArea.render();
+        this.renderBackground();
+        this.renderActiveArea();
+        this.renderOverlay();
     }
 
-    renderBackground(data) {
+    renderBackground() {
         const line = new Path2D();
 
         line.moveTo(0, previewHeight / 2);
         line.lineTo(this.element.width, previewHeight / 2);
 
         this.context.stroke(line);
+    }
+
+    renderActiveArea() {
+        this.activeArea.render();
+    }
+
+    renderOverlay() {
+        const fillStyle = this.context.fillStyle;
+
+        this.context.fillStyle = "rgba(245, 249, 252, 0.9)";
+        this.context.fillRect(
+            0,
+            0,
+            this.activeArea.pos.x,
+            this.element.height,
+        );
+        this.context.fillRect(
+            this.activeArea.pos.x + this.activeArea.dim.width,
+            0,
+            this.element.width,
+            this.element.height,
+        );
+
+        this.context.fillStyle = fillStyle;
     }
 }
 
@@ -176,7 +170,7 @@ class ChartWidget {
         this.init();
 
         setInterval(() => {
-            // throttle(window.requestAnimationFrame(() => this.preview.render()), 20);
+            //TODO here should be another mechanism of rendering!!!
             this.preview.render();
         }, 25);
     }
