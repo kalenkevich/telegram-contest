@@ -34,9 +34,16 @@ export default class ChartGraphic extends CanvasComponent {
                 const path = new Path2D();
                 const lineWidth = this.context.lineWidth;
 
-                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY + canvasPaddingChart);
+                path.moveTo(
+                    i * scaleX,
+                    this.element.height - values[i] * scaleY + canvasPaddingChart,
+                );
                 i++;
-                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY + canvasPaddingChart);
+
+                path.lineTo(
+                    i * scaleX,
+                    this.element.height - values[i] * scaleY + canvasPaddingChart
+                );
 
                 this.context.lineWidth = this.props.lineWidth;
                 this.context.stroke(path);

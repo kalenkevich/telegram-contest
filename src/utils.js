@@ -1,5 +1,5 @@
 export const getMaxValueFromArray = (array) => {
-    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value);
+    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value, 0);
 };
 
 export const throttle = (func, ms) => {

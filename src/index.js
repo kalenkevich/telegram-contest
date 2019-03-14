@@ -15,6 +15,8 @@ export const options = {
     primaryChartColor: '#AAAAAA',
     xAxisType: 'x',
     canvasPaddingChart: 10,
+    axisScale: 6,
+    axisFontSize: 14,
 };
 
 /**
