@@ -1,9 +1,9 @@
 const primaryChartColor = '#AAAAAA';
 const pixelRatio = window.devicePixelRatio || 1;
-const chartWidth = 600;
+const chartWidth = 400;
 const chartHeight = 500;
-const legendWidth = 600;
-const legendHeight = 100;
+const legendWidth = 400;
+const legendHeight = 50;
 const legendActiveAreaDefaultWidth = legendWidth / 4;
 const legendActiveAreaStretchBorderWidth = 5;
 const X_AXIS_TYPE = 'x';
@@ -113,10 +113,6 @@ class Component {
         this.children.forEach(child => child.render());
     }
 
-    clear() {
-        this.context.clearRect(0, 0, this.element.width, this.element.height);
-    }
-
     //Todo do it more effective, now for every child it will render from root parent
     rerender() {
         let currentParent = this.parent;
@@ -143,6 +139,10 @@ class CanvasComponent extends Component {
     get context() {
         return this.element.getContext("2d");
     }
+
+    clear() {
+        this.context.clearRect(0, 0, this.element.width, this.element.height);
+    }
 }
 
 class ChartPopover extends CanvasComponent {
@@ -165,6 +165,8 @@ class ChartPopover extends CanvasComponent {
 
         this.onMouseMove = this.onMouseMove.bind(this);
         this.element.addEventListener("mousemove", this.onMouseMove);
+        this.onMouseLeave = this.onMouseLeave.bind(this);
+        this.element.addEventListener("mouseleave", this.onMouseLeave);
     }
 
     onDataChanged(data) {
@@ -188,16 +190,18 @@ class ChartPopover extends CanvasComponent {
         };
     }
 
-    onMouseMove(event) {
-        const { isChartArea, grabOffset } = this.getMouseAlignmentData(event.pageX, event.pageY);
+    onMouseLeave() {
+        this.pos.x = null;
+        this.pos.y = null;
 
-        if (isChartArea) {
-            this.pos.x = grabOffset.x;
-            this.pos.y = grabOffset.y;
-        } else {
-            this.pos.x = null;
-            this.pos.y = null;
-        }
+        this.rerender();
+    }
+
+    onMouseMove(event) {
+        const { grabOffset } = this.getMouseAlignmentData(event.pageX, event.pageY);
+
+        this.pos.x = grabOffset.x;
+        this.pos.y = grabOffset.y;
 
         this.rerender();
     }
@@ -287,8 +291,8 @@ class ChartGrid extends CanvasComponent {
 
             this.context.fillStyle = primaryChartColor;
             this.context.strokeStyle = primaryChartColor;
-            this.context.font = "28px Arial";
-            this.context.lineWidth = 2;
+            this.context.font = `${14 * pixelRatio}px Arial`;
+            this.context.lineWidth = pixelRatio;
 
             path.moveTo(0, stepHeight * i);
             path.lineTo(this.element.width, stepHeight * i);
@@ -312,12 +316,12 @@ class Chart extends CanvasComponent {
         });
         this.chartGraphic = new ChartGraphic(this.element, {
             data: this.props.data,
-            lineWidth: 5,
+            lineWidth: 2.5 * pixelRatio,
         });
 
         this.chartPopover = new ChartPopover(this.element, {
             data: this.props.data,
-            lineWidth: 1,
+            lineWidth: pixelRatio,
         });
 
         this.appendChild(this.chartGrid);
@@ -349,7 +353,7 @@ class ChartLegendActiveArea extends CanvasComponent {
             height: legendHeight,
         };
         this.pos = {
-            x: legendWidth - legendActiveAreaDefaultWidth * 2,
+            x: legendWidth - legendActiveAreaDefaultWidth,
             y: 0,
         };
         this.offset = {
@@ -443,7 +447,9 @@ class ChartLegendActiveArea extends CanvasComponent {
             };
 
             this.element.addEventListener("mousemove", onMouseMove);
-            this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
+            this.element.addEventListener("mouseup", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+            });
         } else if (isRightBorder) {
             const onMouseMove = (event) => {
                 const pageX = event.pageX;
@@ -462,24 +468,28 @@ class ChartLegendActiveArea extends CanvasComponent {
             };
 
             this.element.addEventListener("mousemove", onMouseMove);
-            this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
+            this.element.addEventListener("mouseup", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+            });
         } else if (isPreviewArea) {
             const onMouseMove = (event) => {
                 const pageX = event.pageX;
-                this.pos.x = pageX- this.offset.left - grabOffset.x;
+                this.pos.x = pageX - this.offset.left - grabOffset.x;
 
                 if (this.pos.x < 0) {
                     this.pos.x = 0;
                 }
 
-                if (this.pos.x + this.dim.width > this.element.width) {
-                    this.pos.x = this.element.width - this.dim.width;
+                if (this.pos.x + this.dim.width > this.element.width / pixelRatio) {
+                    this.pos.x = this.element.width / pixelRatio - this.dim.width;
                 }
 
                 this.onActiveDataChange();
             };
             this.element.addEventListener("mousemove", onMouseMove);
-            this.element.addEventListener("mouseup", () => this.element.removeEventListener('mousemove', onMouseMove));
+            this.element.addEventListener("mouseup", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+            });
         }
     }
 
@@ -570,7 +580,7 @@ class ChartLegend extends CanvasComponent {
         this.activeArea = new ChartLegendActiveArea(this.element, this.props);
         this.backgroundChart = new ChartGraphic(this.element, {
             data: this.props.data,
-            lineWidth: 3,
+            lineWidth: 1.5 * pixelRatio,
         });
 
         this.appendChild(this.activeArea);
