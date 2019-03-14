@@ -1,12 +1,3 @@
-import {
-    pixelRatio,
-    legendWidth,
-    legendHeight,
-    primaryChartColor,
-    legendActiveAreaDefaultWidth,
-    legendActiveAreaStretchBorderWidth,
-    X_AXIS_TYPE,
-} from '../contansts';
 import { getScale, isLineIntersectRectangle } from '../utils';
 import CanvasComponent from '../base/CanvasComponent';
 
@@ -15,6 +6,11 @@ import CanvasComponent from '../base/CanvasComponent';
  */
 export default class ChartLegendActiveArea extends CanvasComponent {
     init() {
+        const {
+            legendWidth,
+            legendHeight,
+            legendActiveAreaDefaultWidth,
+        } = this.props.options;
         this.data = this.props.data;
         this.dim = {
             width: legendActiveAreaDefaultWidth,
@@ -40,6 +36,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     getMouseAlignmentData(pageX, pageY) {
+        const { legendActiveAreaStretchBorderWidth } = this.props.options;
         const grabOffset = {
             x: pageX - this.offset.left - this.pos.x,
             y: pageY - this.offset.top - this.pos.y,
@@ -85,6 +82,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     onMouseDown(event) {
+        const { legendActiveAreaStretchBorderWidth, pixelRatio } = this.props.options;
         const {
             grabOffset,
             isLeftBorder,
@@ -163,12 +161,13 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
     getActiveColumns(data, position, dimension) {
         const newColumns = [];
-        const { scaleX, scaleY } = getScale(data, this.element.width, this.element.height);
+        const { xAxisType, pixelRatio } = this.props.options;
+        const { scaleX, scaleY } = getScale(data, this.element.width, this.element.height, xAxisType);
 
         (data.columns || []).forEach((column, index) => {
             const name = column[0];
 
-            if (name === X_AXIS_TYPE) {
+            if (name === xAxisType) {
                 newColumns.push(column);
 
                 return;
@@ -213,6 +212,12 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     render() {
+        const {
+            primaryChartColor,
+            pixelRatio,
+            legendActiveAreaStretchBorderWidth,
+        } = this.props.options;
+
         super.render();
 
         this.context.strokeRect(
@@ -236,6 +241,29 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             legendActiveAreaStretchBorderWidth * pixelRatio,
             this.dim.height * pixelRatio,
         );
+        this.context.fillStyle = fillStyle;
+
+        this.renderOverlay();
+    }
+
+    renderOverlay() {
+        const { pixelRatio } = this.props.options;
+        const fillStyle = this.context.fillStyle;
+
+        this.context.fillStyle = "rgba(245, 249, 252, 0.8)";
+        this.context.fillRect(
+            0,
+            0,
+            this.pos.x * pixelRatio,
+            this.element.height,
+        );
+        this.context.fillRect(
+            (this.pos.x + this.dim.width) * pixelRatio,
+            0,
+            this.element.width,
+            this.element.height,
+        );
+
         this.context.fillStyle = fillStyle;
     }
 }

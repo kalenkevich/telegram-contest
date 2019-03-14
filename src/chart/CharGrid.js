@@ -1,5 +1,4 @@
 import { getMaxValueFromColumns } from '../utils';
-import { primaryChartColor, pixelRatio } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
 /**
@@ -17,7 +16,8 @@ export default class ChartGrid extends CanvasComponent {
     render() {
         super.render();
 
-        const maxValue = getMaxValueFromColumns(this.data);
+        const { primaryChartColor, pixelRatio, xAxisType } = this.props.options;
+        const maxValue = getMaxValueFromColumns(this.data, xAxisType);
         const stepHeight = this.element.height / 6;
         const stepValue = maxValue / 6;
 

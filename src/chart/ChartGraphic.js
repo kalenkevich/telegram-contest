@@ -1,5 +1,4 @@
 import { getScale } from '../utils';
-import { X_AXIS_TYPE, CANVAS_PADDING_CHART } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
 /**
@@ -18,13 +17,13 @@ export default class ChartGraphic extends CanvasComponent {
 
     render() {
         super.render();
-
-        const { scaleX, scaleY } = getScale(this.data, this.element.width, this.element.height);
+        const { xAxisType, canvasPaddingChart } = this.props.options;
+        const { scaleX, scaleY } = getScale(this.data, this.element.width, this.element.height, xAxisType);
 
         (this.data.columns || []).forEach((column, index) => {
             const [name, ...values] = this.data.columns[index];
 
-            if (this.data.types[name] === X_AXIS_TYPE) {
+            if (this.data.types[name] === xAxisType) {
                 return;
             }
 
@@ -35,9 +34,9 @@ export default class ChartGraphic extends CanvasComponent {
                 const path = new Path2D();
                 const lineWidth = this.context.lineWidth;
 
-                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY + CANVAS_PADDING_CHART);
+                path.moveTo(i * scaleX, this.element.height - values[i] * scaleY + canvasPaddingChart);
                 i++;
-                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY + CANVAS_PADDING_CHART);
+                path.lineTo(i * scaleX, this.element.height - values[i] * scaleY + canvasPaddingChart);
 
                 this.context.lineWidth = this.props.lineWidth;
                 this.context.stroke(path);

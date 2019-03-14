@@ -1,11 +1,1 @@
-export const primaryChartColor = '#AAAAAA';
-export const pixelRatio = window.devicePixelRatio || 1;
-export const chartWidth = 400;
-export const chartHeight = 500;
-export const legendWidth = 400;
-export const legendHeight = 50;
-export const legendActiveAreaDefaultWidth = legendWidth / 4;
-export const legendActiveAreaStretchBorderWidth = 5;
-export const X_AXIS_TYPE = 'x';
 export const THROTTLE_TIME_FOR_RENDER = 10;
-export const CANVAS_PADDING_CHART = 10;

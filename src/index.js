@@ -1,74 +1,83 @@
 import data from '../resourses/chart_data.json';
-import {
-    pixelRatio,
-    chartWidth,
-    chartHeight,
-    primaryChartColor,
-    legendWidth,
-    legendHeight,
-} from './contansts';
 import Chart from './chart/Chart';
 import ChartLegend from './legend/Legend';
 import ButtonsPanel from './panel/ButtonsPanel';
+import Component from './base/Component';
+
+export const options = {
+    pixelRatio: window.devicePixelRatio || 1,
+    chartWidth: 800,
+    chartHeight: 500,
+    legendWidth: 800,
+    legendHeight: 50,
+    legendActiveAreaDefaultWidth: 800 / 4,
+    legendActiveAreaStretchBorderWidth: 5,
+    primaryChartColor: '#AAAAAA',
+    xAxisType: 'x',
+    canvasPaddingChart: 10,
+};
 
 /**
- * Class which manage canvas elements
+ * Class which manage all elements for
  */
-class ChartWidget {
-    constructor(id, data) {
-        this.chartContainer = document.getElementById(id);
-
+export default class ChartWidget extends Component {
+    init() {
         this.title = document.createElement('h2');
         this.title.innerText = 'Followers';
         this.title.style.fontFamily = 'Arial';
 
         this.chart = document.createElement('canvas');
         this.chart.id = 'chart';
-        this.chart.width = chartWidth * pixelRatio;
-        this.chart.height = chartHeight * pixelRatio;
-        this.chart.style.width = `${chartWidth}px`;
-        this.chart.style.height = `${chartHeight}px`;
+        this.chart.width = options.chartWidth * options.pixelRatio;
+        this.chart.height = options.chartHeight * options.pixelRatio;
+        this.chart.style.width = `${options.chartWidth}px`;
+        this.chart.style.height = `${options.chartHeight}px`;
         this.chart.getContext('2d').mozImageSmoothingEnabled = false;
         this.chart.getContext('2d').imageSmoothingEnabled = false;
-        this.chart.style.border = `1px solid ${primaryChartColor}`;
+        this.chart.style.border = `1px solid ${options.primaryChartColor}`;
         this.chart.style.display = 'block';
 
         this.legend = document.createElement('canvas');
         this.legend.id = 'legend';
-        this.legend.width = legendWidth * pixelRatio;
-        this.legend.height = legendHeight * pixelRatio;
-        this.legend.style.width = `${legendWidth}px`;
-        this.legend.style.height = `${legendHeight}px`;
+        this.legend.width = options.legendWidth * options.pixelRatio;
+        this.legend.height = options.legendHeight * options.pixelRatio;
+        this.legend.style.width = `${options.legendWidth}px`;
+        this.legend.style.height = `${options.legendHeight}px`;
         this.legend.getContext('2d').mozImageSmoothingEnabled = false;
         this.legend.getContext('2d').imageSmoothingEnabled = false;
-        this.legend.style.border = `1px solid ${primaryChartColor}`;
+        this.legend.style.border = `1px solid ${options.primaryChartColor}`;
         this.legend.style.display = 'block';
         this.legend.style.marginTop = '40px';
 
         this.buttonsPanel = document.createElement('div');
         this.buttonsPanel.style.display = 'flex';
 
-        this.chartContainer.appendChild(this.title);
-        this.chartContainer.appendChild(this.chart);
-        this.chartContainer.appendChild(this.legend);
-        this.chartContainer.appendChild(this.buttonsPanel);
+        this.element.appendChild(this.title);
+        this.element.appendChild(this.chart);
+        this.element.appendChild(this.legend);
+        this.element.appendChild(this.buttonsPanel);
 
-        this.chart = new Chart(this.chart, { data });
+        this.chart = new Chart(this.chart, {
+            data: this.props.data,
+            options: this.props.options,
+        });
         this.legend = new ChartLegend(this.legend, {
-            data,
+            data: this.props.data,
+            options: this.props.options,
             onDataChange: (data) => {
                 this.chart.onDataChanged(data);
             }
         });
         this.buttonsPanel = new ButtonsPanel(this.buttonsPanel, {
-            data,
+            data: this.props.data,
+            options: this.props.options,
             onDataChange: (data) => {
                 this.legend.onDataChanged(data);
             }
         });
     }
 
-    show() {
+    render() {
         this.chart.render();
         this.legend.render();
         this.buttonsPanel.render();
@@ -76,7 +85,10 @@ class ChartWidget {
 }
 
 window.onload = function () {
-    const chart = new ChartWidget("chart", data[0]);
+    const chart = new ChartWidget(document.getElementById("chart"), {
+        data: data[0],
+        options,
+    });
 
-    chart.show();
+    chart.render();
 };

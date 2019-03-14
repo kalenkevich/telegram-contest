@@ -1,4 +1,3 @@
-import { legendActiveAreaStretchBorderWidth, pixelRatio } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
 export default class ChartPopover extends CanvasComponent {
@@ -30,6 +29,7 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     getMouseAlignmentData(pageX, pageY) {
+        const { legendActiveAreaStretchBorderWidth } = this.props.options;
         const grabOffset = {
             x: pageX - this.offset.left,
             y: pageY - this.offset.top,
@@ -64,6 +64,8 @@ export default class ChartPopover extends CanvasComponent {
 
     render() {
         super.render();
+
+        const { pixelRatio } = this.props.options;
 
         if (this.pos.x) {
             const path = new Path2D();

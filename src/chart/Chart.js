@@ -1,4 +1,3 @@
-import { pixelRatio } from '../contansts';
 import ChartGrid from './CharGrid';
 import ChartGraphic from './ChartGraphic';
 import ChartPopover from './ChartPopover';
@@ -9,16 +8,21 @@ import CanvasComponent from '../base/CanvasComponent';
  */
 export default class Chart extends CanvasComponent {
     init() {
+        const { pixelRatio } = this.props.options;
+
         this.chartGrid = new ChartGrid(this.element, {
             data: this.props.data,
+            options: this.props.options,
         });
         this.chartGraphic = new ChartGraphic(this.element, {
             data: this.props.data,
+            options: this.props.options,
             lineWidth: 2.5 * pixelRatio,
         });
 
         this.chartPopover = new ChartPopover(this.element, {
             data: this.props.data,
+            options: this.props.options,
             lineWidth: pixelRatio,
         });
 
@@ -31,11 +35,5 @@ export default class Chart extends CanvasComponent {
         this.chartGrid.onDataChanged(data);
         this.chartGraphic.onDataChanged(data);
         this.chartPopover.onDataChanged(data);
-    }
-
-    render() {
-        this.clear();
-
-        super.render();
     }
 }

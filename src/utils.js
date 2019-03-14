@@ -1,5 +1,3 @@
-import { X_AXIS_TYPE } from './contansts';
-
 export const getMaxValueFromArray = (array) => {
     return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value);
 };
@@ -53,11 +51,11 @@ export const isLineIntersectRectangle = (x1, y1, x2, y2, minX, minY, maxX, maxY)
     return x > minX && x < maxX;
 };
 
-export const getMaxValueFromColumns = (data) => {
+export const getMaxValueFromColumns = (data, xAxisType) => {
     return (data.columns || []).reduce((maxValue, column) => {
         const [name, ...values] = column;
 
-        if (data.types[name] === X_AXIS_TYPE) {
+        if (data.types[name] === xAxisType) {
             return;
         }
 
@@ -67,12 +65,12 @@ export const getMaxValueFromColumns = (data) => {
     }, 0);
 };
 
-export const getScale = (data, elementWidth, elementHeight) => {
+export const getScale = (data, elementWidth, elementHeight, xAxisType) => {
     const column = (data.columns || []).find(
-        column => data.types[column[0]] !== X_AXIS_TYPE) || [];
+        column => data.types[column[0]] !== xAxisType) || [];
 
     return {
         scaleX: elementWidth / column.length,
-        scaleY: elementHeight / getMaxValueFromColumns(data),
+        scaleY: elementHeight / getMaxValueFromColumns(data, xAxisType),
     };
 };

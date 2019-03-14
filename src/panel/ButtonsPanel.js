@@ -1,17 +1,17 @@
 import Component from '../base/Component';
-import { X_AXIS_TYPE } from '../contansts';
 
 /**
  * Class which manage buttons with lines of the Chart
  */
 export default class ButtonsPanel extends Component {
-    render() {
+    init() {
         let data = this.props.data;
+        const { xAxisType } = this.props.options;
 
         (this.props.data.columns || []).reduce((checkboxes, column) => {
             const [name,] = column;
 
-            if (name !== X_AXIS_TYPE) {
+            if (name !== xAxisType) {
                 const checkbox = document.createElement('input');
                 const label = document.createElement('label');
                 const wrapper = document.createElement('div');

@@ -22,6 +22,10 @@ export default class Component {
 
     init() {}
 
+    clear() {
+        this.element.innerHTML = '';
+    }
+
     render() {
         this.children.forEach(child => child.render());
     }
@@ -41,6 +45,9 @@ export default class Component {
             nextParent = currentParent.parent;
         }
 
-        currentParent.render();
+        window.requestAnimationFrame(() => {
+            currentParent.clear();
+            currentParent.render();
+        });
     }
 }
