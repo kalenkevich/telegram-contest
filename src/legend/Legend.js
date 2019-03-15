@@ -11,6 +11,7 @@ export default class ChartLegend extends CanvasComponent {
         this.backgroundChart = new ChartGraphic(this.element, {
             data: this.props.data,
             options: this.props.options,
+            animation: false,
             lineWidth: 1.5 * this.props.options.pixelRatio,
         });
 

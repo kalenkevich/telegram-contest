@@ -3,6 +3,7 @@ import Chart from './chart/Chart';
 import ChartLegend from './legend/Legend';
 import ButtonsPanel from './panel/ButtonsPanel';
 import Component from './base/Component';
+import POCAnimationComponent from './proof-of-concept/POCAnimationComponent';
 
 export const options = {
     pixelRatio: window.devicePixelRatio || 1,
@@ -23,36 +24,60 @@ export const options = {
  * Class which manage all elements for
  */
 export default class ChartWidget extends Component {
+    getNewCanvas(options) {
+        const canvas = document.createElement('canvas');
+
+        canvas.id = options.id;
+        canvas.width = options.width * options.pixelRatio;
+        canvas.height = options.height * options.pixelRatio;
+        canvas.style.width = `${options.width}px`;
+        canvas.style.height = `${options.height}px`;
+        canvas.getContext('2d').mozImageSmoothingEnabled = false;
+        canvas.getContext('2d').imageSmoothingEnabled = false;
+        canvas.style.border = `1px solid ${options.primaryChartColor}`;
+        canvas.style.display = 'block';
+
+        return canvas;
+    }
+
     init() {
         this.title = document.createElement('h2');
         this.title.innerText = 'Followers';
         this.title.style.fontFamily = 'Arial';
 
-        this.chart = document.createElement('canvas');
-        this.chart.id = 'chart';
-        this.chart.width = options.chartWidth * options.pixelRatio;
-        this.chart.height = options.chartHeight * options.pixelRatio;
-        this.chart.style.width = `${options.chartWidth}px`;
-        this.chart.style.height = `${options.chartHeight}px`;
-        this.chart.getContext('2d').mozImageSmoothingEnabled = false;
-        this.chart.getContext('2d').imageSmoothingEnabled = false;
-        this.chart.style.border = `1px solid ${options.primaryChartColor}`;
-        this.chart.style.display = 'block';
-
-        this.legend = document.createElement('canvas');
-        this.legend.id = 'legend';
-        this.legend.width = options.legendWidth * options.pixelRatio;
-        this.legend.height = options.legendHeight * options.pixelRatio;
-        this.legend.style.width = `${options.legendWidth}px`;
-        this.legend.style.height = `${options.legendHeight}px`;
-        this.legend.getContext('2d').mozImageSmoothingEnabled = false;
-        this.legend.getContext('2d').imageSmoothingEnabled = false;
-        this.legend.style.border = `1px solid ${options.primaryChartColor}`;
-        this.legend.style.display = 'block';
+        this.chart = this.getNewCanvas({
+            id: 'chart',
+            width: options.chartWidth,
+            height: options.chartHeight,
+            pixelRatio: options.pixelRatio,
+            primaryChartColor: options.primaryChartColor,
+        });
+        this.legend = this.getNewCanvas({
+            id: 'legend',
+            width: options.legendWidth,
+            height: options.legendHeight,
+            pixelRatio: options.pixelRatio,
+            primaryChartColor: options.primaryChartColor,
+        });
         this.legend.style.marginTop = '40px';
 
         this.buttonsPanel = document.createElement('div');
         this.buttonsPanel.style.display = 'flex';
+
+        // !-------------------POC-----------------
+        this.animation = this.getNewCanvas({
+            id: 'poc-animation',
+            width: options.legendWidth,
+            height: options.legendHeight,
+            pixelRatio: options.pixelRatio,
+            primaryChartColor: options.primaryChartColor,
+        });
+        this.pocAnimation = new POCAnimationComponent(this.animation, {
+            data: this.props.data,
+            options: this.props.options,
+        });
+        this.element.appendChild(this.animation);
+        // -------------------POC-----------------!
 
         this.element.appendChild(this.title);
         this.element.appendChild(this.chart);
@@ -83,6 +108,7 @@ export default class ChartWidget extends Component {
         this.chart.render();
         this.legend.render();
         this.buttonsPanel.render();
+        this.pocAnimation.render();
     }
 }
 

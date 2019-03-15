@@ -70,7 +70,7 @@ export const getScale = (data, elementWidth, elementHeight, xAxisType) => {
         column => data.types[column[0]] !== xAxisType) || [];
 
     return {
-        scaleX: elementWidth / column.length,
+        scaleX: elementWidth / (column.length - 2),
         scaleY: elementHeight / getMaxValueFromColumns(data, xAxisType),
     };
 };
