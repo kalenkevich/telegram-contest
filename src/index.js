@@ -74,6 +74,7 @@ export default class ChartWidget extends Component {
         });
         this.pocAnimation = new POCAnimationComponent(this.animation, {
             data: this.props.data,
+            animationType: 'linear',
             options: this.props.options,
         });
         this.element.appendChild(this.animation);
