@@ -2,7 +2,7 @@ import CanvasComponent from '../base/CanvasComponent';
 
 export default class ChartPopover extends CanvasComponent {
     init() {
-        this.data = this.props.data;
+        this.lineSets = this.props.lineSets;
         this.pos = {
             x: null,
             y: null,
@@ -24,8 +24,10 @@ export default class ChartPopover extends CanvasComponent {
         this.element.addEventListener("mouseleave", this.onMouseLeave);
     }
 
-    onDataChanged(data) {
-        this.data = data;
+    onLineSetsChanged(lineSets) {
+        this.lineSets = lineSets;
+
+        this.rerender();
     }
 
     getMouseAlignmentData(pageX, pageY) {
@@ -65,15 +67,80 @@ export default class ChartPopover extends CanvasComponent {
     render() {
         super.render();
 
+        if (this.pos.x) {
+            const nearestValues = this.getNearestValueIndexes();
+
+            this.renderCursorLine();
+            this.renderActiveValues(nearestValues);
+            this.renderValuesPopup(nearestValues);
+        }
+    }
+
+    renderCursorLine() {
+        const { pixelRatio } = this.props.options;
+        const path = new Path2D();
+
+        path.moveTo(this.pos.x * pixelRatio, 0);
+        path.lineTo(this.pos.x * pixelRatio, this.dim.height);
+
+        this.context.stroke(path);
+    }
+
+    renderActiveValues(nearestValues) {
+        (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
+            if (valueIndex !== -1) {
+                const lineSet = this.lineSets[lineSetIndex];
+                const line = lineSet.lines[valueIndex];
+
+                this.context.strokeStyle = lineSet.color;
+                this.context.lineWidth = this.props.lineWidth * 2.5;
+                this.context.beginPath();
+                this.context.arc(line.x1, line.y1, 10, 0, 2 * Math.PI);
+                this.context.stroke();
+            }
+        });
+    }
+
+    renderValuesPopup(nearestValues) {
+        const { pixelRatio, axisFontSize, primaryChartColor } = this.props.options;
+
+        this.context.fillStyle = primaryChartColor;
+        this.context.strokeStyle = primaryChartColor;
+        this.context.font = `${axisFontSize * pixelRatio}px Arial`;
+        this.context.lineWidth = pixelRatio;
+        this.context.rect(this.pos.x * pixelRatio + 20, 40, 150, 100);
+        this.context.stroke();
+
+        (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
+            if (valueIndex !== -1) {
+                const lineSet = this.lineSets[lineSetIndex];
+                const name = lineSet.name;
+
+                this.context.fillText(`${name}: value`, this.pos.x * pixelRatio + 45, 45 + lineSetIndex * 35);
+            }
+        });
+    }
+
+    getNearestValueIndexes() {
         const { pixelRatio } = this.props.options;
 
-        if (this.pos.x) {
-            const path = new Path2D();
+        return (this.lineSets || []).reduce((nearestValueIndexes, lineSet) => {
+            const { index } = (lineSet.lines || []).reduce((result, line, index) => {
+                const distance = Math.abs(this.pos.x * pixelRatio - line.x1);
 
-            path.moveTo(this.pos.x * pixelRatio, 0);
-            path.lineTo(this.pos.x * pixelRatio, this.dim.height);
+                if (result.minDistance > distance) {
+                    return {
+                        index,
+                        minDistance: distance,
+                    }
+                }
 
-            this.context.stroke(path);
-        }
+                return result;
+            }, { index: -1, minDistance: 100000000 });
+
+            nearestValueIndexes.push(index);
+
+            return nearestValueIndexes;
+        }, []);
     }
 }

@@ -1,18 +1,25 @@
 import CanvasComponent from '../base/CanvasComponent';
 import ChartLegendActiveArea from './LegendActiveArea';
 import ChartGraphic from '../chart/ChartGraphic';
+import { getLineSets } from '../utils';
 
 /**
  * Class which manage legend of the Chart
  */
 export default class ChartLegend extends CanvasComponent {
     init() {
-        this.activeArea = new ChartLegendActiveArea(this.element, this.props);
+        this.data = this.props.data;
+
+        const lineSets = this.getLineSets();
+
+        this.activeArea = new ChartLegendActiveArea(this.element, {
+            ...this.props,
+        });
         this.backgroundChart = new ChartGraphic(this.element, {
-            data: this.props.data,
+            lineSets,
+            lineWidth: 1.5 * this.props.options.pixelRatio,
             options: this.props.options,
             animation: false,
-            lineWidth: 1.5 * this.props.options.pixelRatio,
         });
 
         this.appendChild(this.backgroundChart);
@@ -20,7 +27,15 @@ export default class ChartLegend extends CanvasComponent {
     }
 
     onDataChanged(data) {
+        this.data = data;
+
+        const lineSets = this.getLineSets();
+
         this.activeArea.onDataChanged(data);
-        this.backgroundChart.onDataChanged(data);
+        this.backgroundChart.onLineSetsChanged(lineSets);
+    }
+
+    getLineSets() {
+        return getLineSets(this.data, this.element.width, this.element.height, this.props.options);
     }
 }

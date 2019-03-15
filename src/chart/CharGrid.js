@@ -1,4 +1,3 @@
-import { getMaxValueFromColumns } from '../utils';
 import CanvasComponent from '../base/CanvasComponent';
 
 /**
@@ -6,60 +5,28 @@ import CanvasComponent from '../base/CanvasComponent';
  */
 export default class ChartGrid extends CanvasComponent {
     init() {
-        this.data = this.props.data;
+        this.axes = this.props.axes;
     }
 
-    onDataChanged(data) {
-        this.data = data;
+    onAxesChanged(axes) {
+        this.axes = axes;
     }
 
     render() {
         super.render();
 
-        //this.renderXAxis();
-        this.renderYAxis();
+        this.renderXAxis(this.axes.x);
+        this.renderYAxis(this.axes.y);
     }
 
-    getFormattedDate(date) {
-        const formatter = new Intl.DateTimeFormat('ru-RU');
-
-        return formatter.format(new Date(date));
-    }
-
-    //TODO this mrthod make render very slow
-    renderXAxis() {
+    renderXAxis(xAxis) {
         const {
             primaryChartColor,
             pixelRatio,
-            axisScale,
             axisFontSize,
         } = this.props.options;
-        const stepWidth = this.element.width / axisScale;
 
-        for (let i = 0; i < axisScale; i++) {
-            this.context.fillStyle = primaryChartColor;
-            this.context.font = `${axisFontSize * pixelRatio}px Arial`;
-            const formattedDate = this.getFormattedDate(new Date());
-            const x = stepWidth * i + 10;
-            const y = this.element.height - 10;
-
-            this.context.fillText(formattedDate, x, y);
-        }
-    }
-
-    renderYAxis() {
-        const {
-            primaryChartColor,
-            pixelRatio,
-            xAxisType,
-            axisScale,
-            axisFontSize,
-        } = this.props.options;
-        const maxValue = getMaxValueFromColumns(this.data, xAxisType);
-        const stepHeight = this.element.height / axisScale;
-        const stepValue = maxValue / axisScale;
-
-        for (let i = 0; i < axisScale; i++ ) {
+        (xAxis.scales || []).forEach((scale) => {
             const path = new Path2D();
 
             this.context.fillStyle = primaryChartColor;
@@ -67,14 +34,34 @@ export default class ChartGrid extends CanvasComponent {
             this.context.font = `${axisFontSize * pixelRatio}px Arial`;
             this.context.lineWidth = pixelRatio;
 
-            path.moveTo(0, stepHeight * i);
-            path.lineTo(this.element.width, stepHeight * i);
+            path.moveTo(0, scale.y);
+            path.lineTo(this.element.width, scale.y);
 
-            path.moveTo(0, stepHeight * i);
-            path.lineTo(this.element.width, stepHeight * i);
-
-            this.context.fillText(Math.floor(maxValue - stepValue * i || 0), 10, stepHeight * i - 10);
+            this.context.fillText(scale.value, scale.x - 10, scale.y - 10);
             this.context.stroke(path);
-        }
+        });
+    }
+
+    renderYAxis(yAxis) {
+        const {
+            primaryChartColor,
+            pixelRatio,
+            axisFontSize,
+        } = this.props.options;
+
+        (yAxis.scales || []).forEach((scale) => {
+            const path = new Path2D();
+
+            this.context.fillStyle = primaryChartColor;
+            this.context.strokeStyle = primaryChartColor;
+            this.context.font = `${axisFontSize * pixelRatio}px Arial`;
+            this.context.lineWidth = pixelRatio;
+
+            path.moveTo(0, scale.y);
+            path.lineTo(this.element.width, scale.y);
+
+            this.context.fillText(scale.value, scale.x + 10, scale.y - 10);
+            this.context.stroke(path);
+        });
     }
 }

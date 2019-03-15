@@ -1,4 +1,5 @@
 import CanvasComponent from '../base/CanvasComponent';
+import Line from '../objects/Line';
 import { getMaxValueFromArray } from '../utils';
 
 const data = {
@@ -239,15 +240,6 @@ class RenderFactory {
         const animationFunction = effects[animationType];
 
         setTimeout(() => window.requestAnimationFrame(() => renderFunction(...args)), animationFunction(ms));
-    }
-}
-
-class Line {
-    constructor(x1, y1, x2, y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
     }
 }
 
