@@ -26,13 +26,13 @@ export default class ChartGrid extends CanvasComponent {
             axisFontSize,
         } = this.props.options;
 
+        this.context.fillStyle = primaryChartColor;
+        this.context.strokeStyle = primaryChartColor;
+        this.context.font = `${axisFontSize * pixelRatio}px Arial`;
+        this.context.lineWidth = pixelRatio;
+
         (xAxis.scales || []).forEach((scale) => {
             const path = new Path2D();
-
-            this.context.fillStyle = primaryChartColor;
-            this.context.strokeStyle = primaryChartColor;
-            this.context.font = `${axisFontSize * pixelRatio}px Arial`;
-            this.context.lineWidth = pixelRatio;
 
             path.moveTo(0, scale.y);
             path.lineTo(this.element.width, scale.y);
@@ -49,13 +49,13 @@ export default class ChartGrid extends CanvasComponent {
             axisFontSize,
         } = this.props.options;
 
+        this.context.fillStyle = primaryChartColor;
+        this.context.strokeStyle = primaryChartColor;
+        this.context.font = `${axisFontSize * pixelRatio}px Arial`;
+        this.context.lineWidth = pixelRatio;
+
         (yAxis.scales || []).forEach((scale) => {
             const path = new Path2D();
-
-            this.context.fillStyle = primaryChartColor;
-            this.context.strokeStyle = primaryChartColor;
-            this.context.font = `${axisFontSize * pixelRatio}px Arial`;
-            this.context.lineWidth = pixelRatio;
 
             path.moveTo(0, scale.y);
             path.lineTo(this.element.width, scale.y);

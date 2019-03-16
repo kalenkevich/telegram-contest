@@ -21,12 +21,10 @@ export default class ChartGraphic extends CanvasComponent {
     }
 
     renderWithoutAnimation() {
-        const { lineWidth } = this.props.options;
+        this.context.lineWidth = this.props.lineWidth;
 
         (this.lineSets || []).forEach((linesData) => {
-            const strokeStyle = this.context.strokeStyle;
-
-            this.context.lineWidth = this.props.lineWidth;
+            const linesSet = new Path2D();
             this.context.strokeStyle = linesData.color;
 
             (linesData.lines || []).forEach(line => {
@@ -34,10 +32,10 @@ export default class ChartGraphic extends CanvasComponent {
 
                 path.moveTo(line.x1, line.y1);
                 path.lineTo(line.x2, line.y2);
-                this.context.stroke(path);
+                linesSet.addPath(path);
             });
 
-            this.context.strokeStyle = strokeStyle;
+            this.context.stroke(linesSet);
         });
     }
 }

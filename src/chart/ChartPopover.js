@@ -78,8 +78,10 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     renderCursorLine() {
-        const { pixelRatio } = this.props.options;
+        const { pixelRatio, primaryChartColor } = this.props.options;
         const path = new Path2D();
+
+        this.context.strokeStyle = primaryChartColor;
 
         path.moveTo(this.pos.x * pixelRatio, 0);
         path.lineTo(this.pos.x * pixelRatio, this.dim.height);

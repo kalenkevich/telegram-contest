@@ -1,6 +1,3 @@
-import { throttle } from '../utils';
-import { THROTTLE_TIME_FOR_RENDER } from '../contansts';
-
 /**
  * Base component which is element of the components tree,
  * where can be access to parents and children
@@ -11,7 +8,6 @@ export default class Component {
         this.props = props;
         this.children = [];
         this.parent = null;
-        this.render = throttle(this.render.bind(this), THROTTLE_TIME_FOR_RENDER);
         this.init();
     }
 
