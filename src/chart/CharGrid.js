@@ -37,7 +37,7 @@ export default class ChartGrid extends CanvasComponent {
             path.moveTo(0, scale.y);
             path.lineTo(this.element.width, scale.y);
 
-            this.context.fillText(scale.value, scale.x - 10, scale.y - 10);
+            this.context.fillText(scale.value, scale.x, scale.y - 10);
             this.context.stroke(path);
         });
     }

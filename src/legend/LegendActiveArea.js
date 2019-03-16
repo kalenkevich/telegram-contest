@@ -163,12 +163,17 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         const newColumns = [];
         const { xAxisType, pixelRatio } = this.props.options;
         const { scaleX, scaleY } = getScale(data, this.element.width, this.element.height, xAxisType);
+        let xAxisColumnIndex = null;
+        let xAxisNewColumnIndex = null;
+        let isXAxisColumnFinished = false;
 
         (data.columns || []).forEach((column, index) => {
             const name = column[0];
 
             if (name === xAxisType) {
-                newColumns.push(column);
+                newColumns.push([name]);
+                xAxisColumnIndex = index;
+                xAxisNewColumnIndex = newColumns.length - 1;
 
                 return;
             }
@@ -189,7 +194,15 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
                 if (isIntersectRectangle) {
                     newColumns[index].push(column[i]);
+
+                    if (xAxisColumnIndex !== null && !isXAxisColumnFinished) {
+                        newColumns[xAxisNewColumnIndex].push(data.columns[xAxisColumnIndex][i]);
+                    }
                 }
+            }
+
+            if (xAxisColumnIndex !== null && !isXAxisColumnFinished) {
+                isXAxisColumnFinished = true;
             }
         });
 
@@ -212,13 +225,18 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     render() {
+        super.render();
+
+        this.renderActiveArea();
+        this.renderOverlay();
+    }
+
+    renderActiveArea() {
         const {
             primaryChartColor,
             pixelRatio,
             legendActiveAreaStretchBorderWidth,
         } = this.props.options;
-
-        super.render();
 
         this.context.strokeRect(
             this.pos.x * pixelRatio,
@@ -242,8 +260,6 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             this.dim.height * pixelRatio,
         );
         this.context.fillStyle = fillStyle;
-
-        this.renderOverlay();
     }
 
     renderOverlay() {

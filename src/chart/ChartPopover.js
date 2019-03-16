@@ -1,4 +1,5 @@
 import CanvasComponent from '../base/CanvasComponent';
+import { getFormattedDate } from '../utils';
 
 export default class ChartPopover extends CanvasComponent {
     init() {
@@ -102,21 +103,26 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     renderValuesPopup(nearestValues) {
-        const { pixelRatio, axisFontSize, primaryChartColor } = this.props.options;
+        const { pixelRatio, axisFontSize, primaryChartColor , xAxisType } = this.props.options;
 
         this.context.fillStyle = primaryChartColor;
         this.context.strokeStyle = primaryChartColor;
         this.context.font = `${axisFontSize * pixelRatio}px Arial`;
         this.context.lineWidth = pixelRatio;
-        this.context.rect(this.pos.x * pixelRatio + 20, 40, 150, 100);
+        this.context.rect(this.pos.x * pixelRatio + 20, 40, 250, (this.lineSets.length - 1) * 70);
         this.context.stroke();
+
+        const xAxisLines = (this.lineSets || []).find(({ name }) => name === xAxisType);
+        const date = getFormattedDate(xAxisLines.lines[nearestValues[1]]);
+        this.context.fillText(`${date}`, this.pos.x * pixelRatio + 45, 80);
 
         (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
                 const lineSet = this.lineSets[lineSetIndex];
                 const name = lineSet.name;
+                const value = lineSet.lines[valueIndex].value;
 
-                this.context.fillText(`${name}: value`, this.pos.x * pixelRatio + 45, 45 + lineSetIndex * 35);
+                this.context.fillText(`${name}: ${value}`, this.pos.x * pixelRatio + 45, 80 + lineSetIndex * 40);
             }
         });
     }

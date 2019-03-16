@@ -83,7 +83,7 @@ export const getLines = (data, columnIndex, elementWidth, elementHeight, xAxisTy
     const [name, ...values] = data.columns[columnIndex];
 
     if (data.types[name] === xAxisType) {
-        return [];
+        return values;
     }
     const lines = [];
 
@@ -94,7 +94,7 @@ export const getLines = (data, columnIndex, elementWidth, elementHeight, xAxisTy
         const x2 = i * scaleX;
         const y2 = elementHeight - values[i] * scaleY;
 
-        lines.push(new Line(x1, y1, x2, y2));
+        lines.push(new Line(x1, y1, x2, y2, values[i - 1]));
     }
 
     return lines;
@@ -118,23 +118,29 @@ export const getLineSets = (data, elementWidth, elementHeight, options) => {
 };
 
 export const getFormattedDate = (date) => {
-    const formatter = new Intl.DateTimeFormat('ru-RU', {
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-    });
+    if (date) {
+        const formatter = new Intl.DateTimeFormat('ru-RU', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+        });
 
-    return formatter.format(new Date(date));
+        return formatter.format(new Date(date));
+    }
+
+    return '';
 };
 
 export const getXAxis = (data, elementWidth, elementHeight, options) => {
-    const { axisScale } = options;
-    const stepWidth = elementWidth / axisScale;
+    const { axisScale, xAxisType } = options;
+    const xAxisColumn = (data.columns || []).find(column => column[0] === xAxisType);
+    const stepValueIndex = Math.floor((xAxisColumn.length - 2) / axisScale);
+    const stepWidth = Math.floor(elementWidth / axisScale);
     const xAxis = new Axis('x');
 
-    for (let i = 0; i < axisScale; i++) {
-        const formattedDate = getFormattedDate(new Date());
-        const x = stepWidth * i;
+    for (let i = 0, valueIndex = 2; i < axisScale; i++, valueIndex += stepValueIndex) {
+        const x = i * stepWidth;
+        const formattedDate = getFormattedDate(xAxisColumn[valueIndex]);
 
         xAxis.addScale(formattedDate, x, elementHeight);
     }
@@ -143,10 +149,7 @@ export const getXAxis = (data, elementWidth, elementHeight, options) => {
 };
 
 export const getYAxis = (data, elementHeight, options) => {
-    const {
-        axisScale,
-        xAxisType,
-    } = options;
+    const { axisScale, xAxisType } = options;
     const maxValue = getMaxValueFromColumns(data, xAxisType);
     const stepHeight = elementHeight / axisScale;
     const stepValue = maxValue / axisScale;

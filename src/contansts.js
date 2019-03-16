@@ -1,1 +1,1 @@
-export const THROTTLE_TIME_FOR_RENDER = 10;
+export const THROTTLE_TIME_FOR_RENDER = 0;

@@ -35,7 +35,9 @@ export default class Component {
         let currentParent = this.parent;
 
         if (!currentParent) {
-            return this.render();
+            window.requestAnimationFrame(() => this.render());
+
+            return;
         }
 
         let nextParent = this.parent.parent;
@@ -45,8 +47,8 @@ export default class Component {
             nextParent = currentParent.parent;
         }
 
+        currentParent.clear();
         window.requestAnimationFrame(() => {
-            currentParent.clear();
             currentParent.render();
         });
     }
