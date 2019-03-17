@@ -17,10 +17,9 @@ export default class ChartLegend extends CanvasComponent {
         });
         this.backgroundChart = new ChartGraphic(this.element, {
             lineSets,
-            lineWidth: 1.5 * this.props.options.pixelRatio,
+            lineWidth: 1.5,
             animationType: 'none',
             options: this.props.options,
-            animation: false,
         });
 
         this.appendChild(this.backgroundChart);

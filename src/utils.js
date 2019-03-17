@@ -1,8 +1,27 @@
 import Line from './objects/Line';
 import Axis from './objects/Axis';
 
-export const getMaxValueFromArray = (array) => {
-    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value, 0);
+export const animate = (options) => {
+    const start = performance.now();
+
+    options.onAnimationStarted();
+
+    requestAnimationFrame(function animate(time) {
+        let timeFraction = (time - start) / options.duration;
+        if (timeFraction > 1) timeFraction = 1;
+
+        const progress = options.timing(timeFraction);
+
+        options.draw(progress);
+
+        if (timeFraction < 1) {
+            requestAnimationFrame(animate);
+        }
+
+        if (timeFraction === 1) {
+            options.onAnimationFinished();
+        }
+    });
 };
 
 export const throttle = (func, ms) => {
@@ -32,6 +51,10 @@ export const throttle = (func, ms) => {
     }
 
     return wrapper;
+};
+
+export const getMaxValueFromArray = (array) => {
+    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value, 0);
 };
 
 export const isLineIntersectRectangle = (x1, y1, x2, y2, minX, minY, maxX, maxY) => {

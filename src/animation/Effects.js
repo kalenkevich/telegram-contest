@@ -115,9 +115,9 @@ export default {
     },
 
     easeInElastic: function(t) {
-        var s = 1.70158;
-        var p = 0;
-        var a = 1;
+        let s = 1.70158;
+        let p = 0;
+        let a = 1;
         if (t === 0) {
             return 0;
         }
@@ -137,7 +137,7 @@ export default {
     },
 
     easeOutElastic: function(t) {
-        const s = 1.70158;
+        let s = 1.70158;
         let p = 0;
         let a = 1;
         if (t === 0) {
@@ -159,7 +159,7 @@ export default {
     },
 
     easeInOutElastic: function(t) {
-        const s = 1.70158;
+        let s = 1.70158;
         let p = 0;
         let a = 1;
         if (t === 0) {
@@ -193,7 +193,7 @@ export default {
     },
 
     easeInOutBack: function(t) {
-        const s = 1.70158;
+        let s = 1.70158;
         if ((t /= 0.5) < 1) {
             return 0.5 * (t * t * (((s *= (1.525)) + 1) * t - s));
         }
@@ -201,7 +201,7 @@ export default {
     },
 
     easeInBounce: function(t) {
-        return 1 - effects.easeOutBounce(1 - t);
+        return 1 - this.easeOutBounce(1 - t);
     },
 
     easeOutBounce: function(t) {
@@ -219,8 +219,8 @@ export default {
 
     easeInOutBounce: function(t) {
         if (t < 0.5) {
-            return effects.easeInBounce(t * 2) * 0.5;
+            return this.easeInBounce(t * 2) * 0.5;
         }
-        return effects.easeOutBounce(t * 2 - 1) * 0.5 + 0.5;
+        return this.easeOutBounce(t * 2 - 1) * 0.5 + 0.5;
     }
 };

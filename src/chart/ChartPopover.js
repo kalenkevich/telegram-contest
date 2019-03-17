@@ -83,6 +83,7 @@ export default class ChartPopover extends CanvasComponent {
         const path = new Path2D();
 
         this.context.strokeStyle = primaryChartColor;
+        this.context.lineWidth = this.props.lineWidth * this.props.options.pixelRatio;
 
         path.moveTo(this.pos.x * pixelRatio, 0);
         path.lineTo(this.pos.x * pixelRatio, this.dim.height);
@@ -97,7 +98,7 @@ export default class ChartPopover extends CanvasComponent {
                 const line = lineSet.lines[valueIndex];
 
                 this.context.strokeStyle = lineSet.color;
-                this.context.lineWidth = this.props.lineWidth * 2.5;
+                this.context.lineWidth = this.props.lineWidth * this.props.options.pixelRatio;
                 this.context.beginPath();
                 this.context.arc(line.x1, line.y1, 10, 0, 2 * Math.PI);
                 this.context.stroke();
@@ -106,12 +107,13 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     renderValuesPopup(nearestValues) {
-        const { pixelRatio, axisFontSize, primaryChartColor , xAxisType } = this.props.options;
+        const { lineWidth } = this;
+        const { pixelRatio, axisFontSize, primaryChartColor, xAxisType } = this.props.options;
 
         this.context.fillStyle = primaryChartColor;
         this.context.strokeStyle = primaryChartColor;
         this.context.font = `${axisFontSize * pixelRatio}px Arial`;
-        this.context.lineWidth = pixelRatio;
+        this.context.lineWidth = lineWidth * pixelRatio;
         this.context.rect(this.pos.x * pixelRatio + 20, 40, 250, (this.lineSets.length - 1) * 70);
         this.context.stroke();
 

@@ -11,7 +11,6 @@ export default class Chart extends CanvasComponent {
     init() {
         this.data = this.props.data;
 
-        const { pixelRatio } = this.props.options;
         const lineSets = this.getLineSets();
         const axes = this.getAxes();
 
@@ -21,15 +20,15 @@ export default class Chart extends CanvasComponent {
         });
         this.chartGraphic = new ChartGraphic(this.element, {
             lineSets,
-            lineWidth: 2.5 * pixelRatio,
-            animationType: 'linear',
+            lineWidth: 2.5,
+            animationType: 'easeInQuad',
+            animationDuration: 350,
             options: this.props.options,
-            animation: false,
         });
         this.chartPopover = new ChartPopover(this.element, {
             lineSets,
             options: this.props.options,
-            lineWidth: pixelRatio,
+            lineWidth: 2.5,
         });
 
         this.appendChild(this.chartGrid);
