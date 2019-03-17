@@ -1,1 +1,1 @@
-export const THROTTLE_TIME_FOR_RENDER = 0;
+export const THROTTLE_TIME_FOR_MOUSE_MOVE = 20;

@@ -1,4 +1,5 @@
-import { getScale, isLineIntersectRectangle } from '../utils';
+import { getScale, isLineIntersectRectangle, throttle } from '../utils';
+import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
 /**
@@ -27,8 +28,8 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             height: this.element.offsetHeight,
         };
 
-        this.onMouseDown = this.onMouseDown.bind(this);
-        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseDown = throttle(this.onMouseDown.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
+        this.onMouseMove = throttle(this.onMouseMove.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.element.addEventListener("mousedown", this.onMouseDown);
         this.element.addEventListener("mousemove", this.onMouseMove);
 
@@ -91,7 +92,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         } = this.getMouseAlignmentData(event.pageX, event.pageY);
 
         if (isLeftBorder) {
-            const onMouseMove = (event) => {
+            const onMouseMove = throttle((event) => {
                 const pageX = event.pageX;
                 let newPosX = pageX - this.offset.left - grabOffset.x;
 
@@ -110,14 +111,14 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 this.dim.width += this.pos.x - newPosX;
                 this.pos.x = newPosX;
                 this.onActiveDataChange();
-            };
+            }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);
             });
         } else if (isRightBorder) {
-            const onMouseMove = (event) => {
+            const onMouseMove = throttle((event) => {
                 const pageX = event.pageX;
                 let newPosX = pageX - this.offset.left;
 
@@ -131,14 +132,14 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
                 this.dim.width = newPosX - this.pos.x;
                 this.onActiveDataChange();
-            };
+            }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);
             });
         } else if (isPreviewArea) {
-            const onMouseMove = (event) => {
+            const onMouseMove = throttle((event) => {
                 const pageX = event.pageX;
                 this.pos.x = pageX - this.offset.left - grabOffset.x;
 
@@ -151,7 +152,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 }
 
                 this.onActiveDataChange();
-            };
+            }, THROTTLE_TIME_FOR_MOUSE_MOVE);
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);

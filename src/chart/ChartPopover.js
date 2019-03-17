@@ -1,5 +1,6 @@
 import CanvasComponent from '../base/CanvasComponent';
-import { getFormattedDate } from '../utils';
+import { getFormattedDate, throttle } from '../utils';
+import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 
 export default class ChartPopover extends CanvasComponent {
     init() {
@@ -19,7 +20,7 @@ export default class ChartPopover extends CanvasComponent {
             height: this.element.height,
         };
 
-        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseMove = throttle(this.onMouseMove.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.element.addEventListener("mousemove", this.onMouseMove);
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.element.addEventListener("mouseleave", this.onMouseLeave);
