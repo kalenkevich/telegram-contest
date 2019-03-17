@@ -3,7 +3,6 @@ import Chart from './chart/Chart';
 import ChartLegend from './legend/Legend';
 import ButtonsPanel from './panel/ButtonsPanel';
 import Component from './base/Component';
-import POCAnimationComponent from './proof-of-concept/POCAnimationComponent';
 
 export const options = {
     pixelRatio: window.devicePixelRatio || 1,
@@ -64,22 +63,6 @@ export default class ChartWidget extends Component {
         this.buttonsPanel = document.createElement('div');
         this.buttonsPanel.style.display = 'flex';
 
-        // !-------------------POC-----------------
-        this.animation = this.getNewCanvas({
-            id: 'poc-animation',
-            width: options.legendWidth,
-            height: options.legendHeight,
-            pixelRatio: options.pixelRatio,
-            primaryChartColor: options.primaryChartColor,
-        });
-        this.pocAnimation = new POCAnimationComponent(this.animation, {
-            data: this.props.data,
-            animationType: 'linear',
-            options: this.props.options,
-        });
-        this.element.appendChild(this.animation);
-        // -------------------POC-----------------!
-
         this.element.appendChild(this.title);
         this.element.appendChild(this.chart);
         this.element.appendChild(this.legend);
@@ -109,7 +92,6 @@ export default class ChartWidget extends Component {
         this.chart.render();
         this.legend.render();
         this.buttonsPanel.render();
-        this.pocAnimation.render();
     }
 }
 

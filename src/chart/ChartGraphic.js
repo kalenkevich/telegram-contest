@@ -17,25 +17,18 @@ export default class ChartGraphic extends CanvasComponent {
     render() {
         super.render();
 
-        this.renderWithoutAnimation();
-    }
+        const { lineWidth, options: { xAxisType }, animationType } = this.props;
+        this.context.lineWidth = lineWidth;
 
-    renderWithoutAnimation() {
-        this.context.lineWidth = this.props.lineWidth;
+        for (let j = 0; j < this.lineSets[0].lines.length; j++) {
+            for (let i = 0; i < this.lineSets.length; i++) {
+                if (this.lineSets[i].name !== xAxisType) {
 
-        (this.lineSets || []).forEach((linesData) => {
-            const linesSet = new Path2D();
-            this.context.strokeStyle = linesData.color;
+                    const line = this.lineSets[i].lines[j];
 
-            (linesData.lines || []).forEach(line => {
-                const path = new Path2D();
-
-                path.moveTo(line.x1, line.y1);
-                path.lineTo(line.x2, line.y2);
-                linesSet.addPath(path);
-            });
-
-            this.context.stroke(linesSet);
-        });
+                    line.render(this.context, 'none', this.lineSets[i].color);
+                }
+            }
+        }
     }
 }

@@ -22,6 +22,7 @@ export default class Chart extends CanvasComponent {
         this.chartGraphic = new ChartGraphic(this.element, {
             lineSets,
             lineWidth: 2.5 * pixelRatio,
+            animationType: 'linear',
             options: this.props.options,
             animation: false,
         });
