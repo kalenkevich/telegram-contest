@@ -41,7 +41,7 @@ export default class ChartGraphic extends CanvasComponent {
     }
 
     renderWithoutAnimation() {
-        const { lineWidth, options: { xAxisType, pixelRatio } } = this.props;
+        const { lineWidth, options: { axis: { xAxisType }, pixelRatio } } = this.props;
         const { lineSets } = this.state;
 
         this.context.lineWidth = lineWidth * pixelRatio;
@@ -66,7 +66,7 @@ export default class ChartGraphic extends CanvasComponent {
     renderWithAnimation() {
         const {
             lineWidth,
-            options: { xAxisType, pixelRatio },
+            options: { axis: { xAxisType }, pixelRatio },
             animationType,
             animationDuration,
         } = this.props;

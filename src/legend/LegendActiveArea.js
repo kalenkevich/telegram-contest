@@ -1,4 +1,4 @@
-import { getScale, isLineIntersectRectangle, throttle } from '../utils';
+import { getScale, isLineIntersectRectangle, throttle, hexToRgb } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
@@ -7,18 +7,14 @@ import CanvasComponent from '../base/CanvasComponent';
  */
 export default class ChartLegendActiveArea extends CanvasComponent {
     init() {
-        const {
-            legendWidth,
-            legendHeight,
-            legendActiveAreaDefaultWidth,
-        } = this.props.options;
+        const { legend } = this.props.options;
         this.data = this.props.data;
         this.dim = {
-            width: legendActiveAreaDefaultWidth,
-            height: legendHeight,
+            width: legend.activeArea.defaultWidth,
+            height: legend.height,
         };
         this.pos = {
-            x: legendWidth - legendActiveAreaDefaultWidth,
+            x: legend.width - legend.activeArea.defaultWidth,
             y: 0,
         };
         this.offset = {
@@ -37,24 +33,24 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     getMouseAlignmentData(pageX, pageY) {
-        const { legendActiveAreaStretchBorderWidth } = this.props.options;
+        const { legend } = this.props.options;
         const grabOffset = {
             x: pageX - this.offset.left - this.pos.x,
             y: pageY - this.offset.top - this.pos.y,
         };
 
         const isLeftBorder = grabOffset.x >= 0
-            && grabOffset.x <= legendActiveAreaStretchBorderWidth
+            && grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
             && grabOffset.y <= this.dim.height;
 
         const isRightBorder = grabOffset.x <= this.dim.width
-            && this.dim.width - grabOffset.x <= legendActiveAreaStretchBorderWidth
+            && this.dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
             && grabOffset.y <= this.dim.height;
 
-        const isPreviewArea = grabOffset.x >= legendActiveAreaStretchBorderWidth
-            && grabOffset.x <= this.dim.width - legendActiveAreaStretchBorderWidth
+        const isPreviewArea = grabOffset.x >= legend.activeArea.stretchBorderWidth
+            && grabOffset.x <= this.dim.width - legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
             && grabOffset.y <= this.dim.height;
 
@@ -83,7 +79,8 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     onMouseDown(event) {
-        const { legendActiveAreaStretchBorderWidth, pixelRatio } = this.props.options;
+        const { legend, pixelRatio } = this.props.options;
+        const legendActiveAreaStretchBorderWidth = legend.activeArea.stretchBorderWidth;
         const {
             grabOffset,
             isLeftBorder,
@@ -162,7 +159,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
     getActiveColumns(data, position, dimension) {
         const newColumns = [];
-        const { xAxisType, pixelRatio } = this.props.options;
+        const { axis: { xAxisType }, pixelRatio } = this.props.options;
         const { scaleX, scaleY } = getScale(data, this.element.width, this.element.height, xAxisType);
         let xAxisColumnIndex = null;
         let xAxisNewColumnIndex = null;
@@ -236,18 +233,20 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         const {
             primaryChartColor,
             pixelRatio,
-            legendActiveAreaStretchBorderWidth,
+            legend,
         } = this.props.options;
+        const legendActiveAreaStretchBorderWidth = legend.activeArea.stretchBorderWidth;
+        const rbgColor = hexToRgb(primaryChartColor);
+        const rgbaStyle = `rgba(${rbgColor.r}, ${rbgColor.g}, ${rbgColor.b}, 1)`;
 
+        this.context.fillStyle = rgbaStyle;
+        this.context.strokeStyle = rgbaStyle;
         this.context.strokeRect(
             this.pos.x * pixelRatio,
             this.pos.y * pixelRatio,
             this.dim.width * pixelRatio,
             this.dim.height * pixelRatio,
         );
-
-        const fillStyle = this.context.fillStyle;
-        this.context.fillStyle = primaryChartColor;
         this.context.fillRect(
             this.pos.x * pixelRatio,
             this.pos.y * pixelRatio,
@@ -260,14 +259,13 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             legendActiveAreaStretchBorderWidth * pixelRatio,
             this.dim.height * pixelRatio,
         );
-        this.context.fillStyle = fillStyle;
     }
 
     renderOverlay() {
-        const { pixelRatio } = this.props.options;
-        const fillStyle = this.context.fillStyle;
+        const { pixelRatio, legend: { overlayColor } } = this.props.options;
+        const rbgColor = hexToRgb(overlayColor);
 
-        this.context.fillStyle = "rgba(245, 249, 252, 0.8)";
+        this.context.fillStyle = `rgba(${rbgColor.r}, ${rbgColor.g}, ${rbgColor.b}, 0.5)`;
         this.context.fillRect(
             0,
             0,
@@ -280,7 +278,5 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             this.element.width,
             this.element.height,
         );
-
-        this.context.fillStyle = fillStyle;
     }
 }

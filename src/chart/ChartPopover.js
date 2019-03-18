@@ -1,6 +1,92 @@
+import Component from '../base/Component';
 import CanvasComponent from '../base/CanvasComponent';
 import { getFormattedDate, throttle } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
+
+export class Popup extends Component {
+    init() {
+        this.state = {
+            isVisible: false,
+            data: null,
+            position: { x: 0, y: 0 },
+        };
+        this.dateElement = document.createElement('span');
+        this.dateElement.style = `
+            font-size: 16px;
+        `;
+        this.valuesWrapperElement = document.createElement('div');
+        this.element.style = `
+            position: absolute;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Arial';
+            padding: 15px;
+            background-color: ${chart.popupColor};
+            box-shadow: 0px 1px 1px 0px rgba(0,0,0,0.3);
+            padding: 5px;
+            min-width: 80px;
+        `;
+        this.valuesWrapperElement.style = `
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        `;
+        this.element.appendChild(this.dateElement);
+        this.element.appendChild(this.valuesWrapperElement);
+    }
+
+    onVisibilityStateChanged(isVisible) {
+        this.state.isVisible = isVisible;
+    }
+
+    onDataChanged(newData) {
+        this.state.data = newData;
+    }
+
+    onPositionChanged(newPosition) {
+        this.state.position = newPosition;
+    }
+
+    render() {
+        const { chart, textColor } = this.props.options;
+        const { isVisible, data, position } = this.state;
+
+        this.element.style.backgroundColor = chart.popupColor;
+
+        if (isVisible && data) {
+            this.element.style.visibility = 'visible';
+            this.element.style.top = `${100}px`;
+            this.element.style.left = `${position.x - 10}px`;
+            this.dateElement.innerText = data.date;
+            this.dateElement.style.color = textColor;
+            this.valuesWrapperElement.innerText = '';
+
+            (data.lines || []).forEach((line) => {
+                const lineContainer = document.createElement('div');
+                lineContainer.style = `
+                    display: flex;
+                    flex-direction: column;
+                    margin-right: 20px;
+                `;
+                const valueSpan = document.createElement('span');
+                valueSpan.innerText = line.value;
+                valueSpan.style.fontSize = '20px';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.innerText = line.name;
+
+                lineContainer.style.color = line.color;
+                lineContainer.appendChild(valueSpan);
+                lineContainer.appendChild(nameSpan);
+
+                this.valuesWrapperElement.appendChild(lineContainer);
+            });
+        } else {
+            this.element.style.visibility = 'hidden';
+        }
+    }
+}
 
 export default class ChartPopover extends CanvasComponent {
     init() {
@@ -20,16 +106,25 @@ export default class ChartPopover extends CanvasComponent {
             height: this.element.height,
         };
 
+        this.element.style.position = 'relative';
         this.onMouseMove = throttle(this.onMouseMove.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.element.addEventListener("mousemove", this.onMouseMove);
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.element.addEventListener("mouseleave", this.onMouseLeave);
+        this.popup = new Popup(document.createElement('div'), this.props);
+        this.element.after(this.popup.element);
     }
 
     onLineSetsChanged(lineSets) {
         this.lineSets = lineSets;
 
         this.rerender();
+    }
+
+    onOptionsChanged(newOptions) {
+        super.onOptionsChanged(newOptions);
+
+        this.popup.onOptionsChanged(newOptions);
     }
 
     getMouseAlignmentData(pageX, pageY) {
@@ -53,6 +148,7 @@ export default class ChartPopover extends CanvasComponent {
     onMouseLeave() {
         this.pos.x = null;
         this.pos.y = null;
+        this.popup.onVisibilityStateChanged(false);
 
         this.rerender();
     }
@@ -62,6 +158,7 @@ export default class ChartPopover extends CanvasComponent {
 
         this.pos.x = grabOffset.x;
         this.pos.y = grabOffset.y;
+        this.popup.onVisibilityStateChanged(true);
 
         this.rerender();
     }
@@ -69,13 +166,14 @@ export default class ChartPopover extends CanvasComponent {
     render() {
         super.render();
 
-        if (this.pos.x) {
-            const nearestValues = this.getNearestValueIndexes();
+        const nearestValues = this.getNearestValueIndexes();
 
+        if (this.pos.x) {
             this.renderCursorLine();
             this.renderActiveValues(nearestValues);
-            this.renderValuesPopup(nearestValues);
         }
+
+        this.renderValuesPopup(nearestValues);
     }
 
     renderCursorLine() {
@@ -107,29 +205,31 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     renderValuesPopup(nearestValues) {
-        const { lineWidth } = this;
-        const { pixelRatio, axisFontSize, primaryChartColor, xAxisType } = this.props.options;
-
-        this.context.fillStyle = primaryChartColor;
-        this.context.strokeStyle = primaryChartColor;
-        this.context.font = `${axisFontSize * pixelRatio}px Arial`;
-        this.context.lineWidth = lineWidth * pixelRatio;
-        this.context.rect(this.pos.x * pixelRatio + 20, 40, 250, (this.lineSets.length - 1) * 70);
-        this.context.stroke();
-
+        const { axis: { xAxisType } } = this.props.options;
         const xAxisLines = (this.lineSets || []).find(({ name }) => name === xAxisType);
         const date = getFormattedDate(xAxisLines.lines[nearestValues[1]]);
-        this.context.fillText(`${date}`, this.pos.x * pixelRatio + 45, 80);
-
-        (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
+        const newData = (nearestValues || []).reduce((data, valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
                 const lineSet = this.lineSets[lineSetIndex];
-                const name = lineSet.name;
+                const name = lineSet.nameValue;
+                const color = lineSet.color;
                 const value = lineSet.lines[valueIndex].value;
 
-                this.context.fillText(`${name}: ${value}`, this.pos.x * pixelRatio + 45, 80 + lineSetIndex * 40);
+                data.lines.push({
+                    value,
+                    name,
+                    color,
+                });
             }
+
+            return data;
+        }, { lines: [], date });
+        this.popup.onDataChanged(newData);
+        this.popup.onPositionChanged({
+            x: this.pos.x,
+            y: this.pos.y,
         });
+        this.popup.render();
     }
 
     getNearestValueIndexes() {

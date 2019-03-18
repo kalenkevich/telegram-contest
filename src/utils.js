@@ -124,14 +124,16 @@ export const getLines = (data, columnIndex, elementWidth, elementHeight, xAxisTy
 };
 
 export const getLineSets = (data, elementWidth, elementHeight, options) => {
-    const { xAxisType } = options;
+    const { axis: { xAxisType } } = options;
 
     return (data.columns || []).reduce((linesSet, column, index) => {
         const newLines = getLines(data, index, elementWidth, elementHeight, xAxisType);
         const columnName = data.columns[index][0];
+        const nameValue = data.names[columnName];
 
         linesSet.push({
             name: columnName,
+            nameValue,
             color: data.colors[columnName],
             lines: newLines,
         });
@@ -142,9 +144,8 @@ export const getLineSets = (data, elementWidth, elementHeight, options) => {
 
 export const getFormattedDate = (date) => {
     if (date) {
-        const formatter = new Intl.DateTimeFormat('ru-RU', {
-            year: 'numeric',
-            month: 'numeric',
+        const formatter = new Intl.DateTimeFormat('en-EN', {
+            month: 'short',
             day: 'numeric',
         });
 
@@ -155,24 +156,26 @@ export const getFormattedDate = (date) => {
 };
 
 export const getXAxis = (data, elementWidth, elementHeight, options) => {
-    const { axisScale, xAxisType } = options;
+    const { axis: { xAxisType, scale: axisScale } } = options;
     const xAxisColumn = (data.columns || []).find(column => column[0] === xAxisType);
     const stepValueIndex = Math.floor((xAxisColumn.length - 2) / axisScale);
     const stepWidth = Math.floor(elementWidth / axisScale);
     const xAxis = new Axis('x');
 
-    for (let i = 0, valueIndex = 2; i < axisScale; i++, valueIndex += stepValueIndex) {
-        const x = i * stepWidth;
-        const formattedDate = getFormattedDate(xAxisColumn[valueIndex]);
+    if (stepValueIndex !== -1) {
+        for (let i = 0, valueIndex = 2; i < axisScale; i++, valueIndex += stepValueIndex) {
+            const x = i * stepWidth;
+            const formattedDate = getFormattedDate(xAxisColumn[valueIndex]);
 
-        xAxis.addScale(formattedDate, x, elementHeight);
+            xAxis.addScale(formattedDate, x, elementHeight);
+        }
     }
 
     return xAxis;
 };
 
 export const getYAxis = (data, elementHeight, options) => {
-    const { axisScale, xAxisType } = options;
+    const { axis: { xAxisType, scale: axisScale } } = options;
     const maxValue = getMaxValueFromColumns(data, xAxisType);
     const stepHeight = elementHeight / axisScale;
     const stepValue = maxValue / axisScale;
@@ -194,4 +197,18 @@ export const getAxes = (data, elementWidth, elementHeight, options) => {
         x: getXAxis(data, elementWidth, elementHeight, options),
         y: getYAxis(data, elementHeight, options),
     };
+};
+
+export const hexToRgb = (hex) => {
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
+
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 };

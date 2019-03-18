@@ -6,14 +6,40 @@
     <title>Contest</title>
 </head>
 <style>
-    #chart {
+    #chart-widget {
+        padding: 5px;
         display: flex;
         flex-direction: column;
-        align-items: center;
+    }
+
+    #switch-mode-button {
         width: 100%;
+        display: flex;
+        justify-content: center;
+        font-family: 'Arial';
+        font-size: 24px;
+        cursor: pointer;
+        color: #408FC9;
+    }
+
+    .checkmark:after {
+        position: absolute;
+        content: ' ';
+        left: 9px;
+        top: 5px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+    }
+
+    input:checked ~ .checkmark:after {
+        content: '';
     }
 </style>
 <body>
-    <div id="chart"></div>
+    <div id="chart-widget"></div>
+    <div id="switch-mode-button"></div>
 </body>
 </html>

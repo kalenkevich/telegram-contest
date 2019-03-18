@@ -13,6 +13,7 @@ export default class Component {
 
     appendChild(child) {
         this.children.push(child);
+
         child.parent = this;
     }
 
@@ -24,6 +25,16 @@ export default class Component {
 
     render() {
         this.children.forEach(child => child.render());
+    }
+
+    onOptionsChanged(newOptions) {
+        this.props.options = newOptions;
+
+        this.children.forEach(child => child.onOptionsChanged(newOptions));
+
+        if (!this.parent) {
+            this.rerender();
+        }
     }
 
     //Todo do it more effective, now for every child it will render from root parent
