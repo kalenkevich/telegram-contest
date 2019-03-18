@@ -33,7 +33,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     getMouseAlignmentData(pageX, pageY) {
-        const { legend } = this.props.options;
+        const { legend, pixelRatio } = this.props.options;
         const grabOffset = {
             x: pageX - this.offset.left - this.pos.x,
             y: pageY - this.offset.top - this.pos.y,
@@ -42,17 +42,17 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         const isLeftBorder = grabOffset.x >= 0
             && grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height;
+            && grabOffset.y <= this.dim.height * pixelRatio;
 
         const isRightBorder = grabOffset.x <= this.dim.width
             && this.dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height;
+            && grabOffset.y <= this.dim.height * pixelRatio;
 
         const isPreviewArea = grabOffset.x >= legend.activeArea.stretchBorderWidth
             && grabOffset.x <= this.dim.width - legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height;
+            && grabOffset.y <= this.dim.height * pixelRatio;
 
         return {
             grabOffset,
