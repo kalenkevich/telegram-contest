@@ -2,9 +2,6 @@ import { getScale, isLineIntersectRectangle, throttle, hexToRgb } from '../utils
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
-/**
- * Class which manage active view of legend of the Chart
- */
 export default class ChartLegendActiveArea extends CanvasComponent {
     init() {
         const { legend } = this.props.options;

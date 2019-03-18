@@ -3,9 +3,6 @@ import Axis from '../objects/Axis';
 import AnimationEffects from '../animation/Effects';
 import CanvasComponent from '../base/CanvasComponent';
 
-/**
- * Class for grid for chart
- */
 export default class ChartGrid extends CanvasComponent {
     init() {
         const { axes } = this.props;
@@ -65,14 +62,6 @@ export default class ChartGrid extends CanvasComponent {
                     currentYAxis.addScale(scale.value, scale.x, scale.y - delta + (delta * progress));
                 });
 
-                ((axes && axes.y.scales) || []).forEach((scale) => {
-                    prevYAxis.addScale(scale.value, scale.x, scale.y - delta + (delta * progress));
-                });
-
-                ((this.state.axes.y.scales) || []).forEach((scale) => {
-                    currentYAxis.addScale(scale.value, scale.x, scale.y + (delta * progress));
-                });
-
                 ((axes && axes.x.scales) || []).forEach((scale) => {
                     prevXAxis.addScale(scale.value, scale.x + (delta * progress), scale.y);
                 });
@@ -111,16 +100,16 @@ export default class ChartGrid extends CanvasComponent {
                 this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(1 - progress).toFixed(2)})`;
 
                 (prevXAxis.scales || []).forEach((scale) => {
-                    this.context.fillText(scale.value, scale.x, scale.y - 10);
+                    this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
                 });
+
                 (prevYAxis.scales || []).forEach((scale) => {
                     this.context.fillText(scale.value, scale.x + 10, scale.y - 10);
                 });
 
                 this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(progress).toFixed(2)})`;
-
                 (currentXAxis.scales || []).forEach((scale) => {
-                    this.context.fillText(scale.value, scale.x, scale.y - 10);
+                    this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
                 });
                 (currentYAxis.scales || []).forEach((scale) => {
                     this.context.fillText(scale.value, scale.x + 10, scale.y - 10);
@@ -139,11 +128,14 @@ export default class ChartGrid extends CanvasComponent {
     }
 
     renderWithoutAnimation() {
-        this.renderXAxis(this.state.axes.x);
-        this.renderYAxis(this.state.axes.y);
+        requestAnimationFrame(() => {
+            this.renderXAxis(this.state.axes.x);
+            this.renderYAxis(this.state.axes.y);
+        });
     }
 
     renderXAxis(xAxis) {
+
         const {
             lineWidth,
             options: {
@@ -159,7 +151,7 @@ export default class ChartGrid extends CanvasComponent {
         this.context.lineWidth = lineWidth * pixelRatio;
 
         (xAxis.scales || []).forEach((scale) => {
-            this.context.fillText(scale.value, scale.x, scale.y - 10);
+            this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
         });
     }
 

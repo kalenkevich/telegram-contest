@@ -1,8 +1,5 @@
 import Component from '../base/Component';
 
-/**
- * Class which manage buttons with lines of the Chart
- */
 export default class CheckboxPanel extends Component {
     render() {
         const { axis: { xAxisType }, primaryChartColor, panel: { textColor } } = this.props.options;

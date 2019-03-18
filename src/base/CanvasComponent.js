@@ -1,8 +1,5 @@
 import Component from './Component';
 
-/**
- * Class for canvas component
- */
 export default class CanvasComponent extends Component {
     get context() {
         return this.element.getContext("2d");

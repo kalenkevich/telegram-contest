@@ -1,7 +1,3 @@
-/**
- * Base component which is element of the components tree,
- * where can be access to parents and children
- */
 export default class Component {
     constructor(element, props = {}) {
         this.element = element;
@@ -37,7 +33,6 @@ export default class Component {
         }
     }
 
-    //Todo do it more effective, now for every child it will render from root parent
     rerender() {
         let currentParent = this.parent;
 

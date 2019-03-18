@@ -2,9 +2,6 @@ import { animate } from '../utils';
 import CanvasComponent from '../base/CanvasComponent';
 import AnimationEffects from '../animation/Effects';
 
-/**
- * Class for showing graphics itself (lines)
- */
 export default class ChartGraphic extends CanvasComponent {
     init() {
         const { lineSets } = this.props;
@@ -37,7 +34,7 @@ export default class ChartGraphic extends CanvasComponent {
         const { animationType = 'none' } = this.props;
         const withAnimation = this.canAnimate && animationType !== 'none';
 
-        withAnimation ? this.renderWithAnimation() : this.renderWithoutAnimation();
+        false ? this.renderWithAnimation() : this.renderWithoutAnimation();
     }
 
     renderWithoutAnimation() {

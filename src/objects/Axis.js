@@ -4,7 +4,7 @@ export default class Axis {
         this.scales = [];
     }
 
-    addScale(value, x, y, width, height) {
+    addScale(value, x, y) {
         this.scales.push({ value, x, y });
     }
 }

@@ -34,7 +34,6 @@ const dayModeOptions = {
     textColor: '#AAAAAA',
 };
 
-
 const nightModeOptions = {
     ...dayModeOptions,
     title: {

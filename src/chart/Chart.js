@@ -4,9 +4,6 @@ import ChartPopover from './ChartPopover';
 import CanvasComponent from '../base/CanvasComponent';
 import { getLineSets, getAxes } from '../utils';
 
-/**
- * Class which manage graphic and axis
- */
 export default class Chart extends CanvasComponent {
     init() {
         this.data = this.props.data;

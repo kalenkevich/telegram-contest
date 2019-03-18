@@ -3,27 +3,9 @@ import CheckboxPanel from '../panel/CheckboxPanel';
 import Component from '../base/Component';
 import Chart from './Chart';
 
-/**
- * Class which manage all elements for
- */
 export default class ChartWidget extends Component {
     constructor(element, data, options) {
         super(element, { data, options });
-    }
-
-    getNewCanvas(options) {
-        const canvas = document.createElement('canvas');
-
-        canvas.id = options.id;
-        canvas.width = options.width * options.pixelRatio;
-        canvas.height = options.height * options.pixelRatio;
-        canvas.style.width = `${options.width}px`;
-        canvas.style.height = `${options.height}px`;
-        canvas.getContext('2d').mozImageSmoothingEnabled = false;
-        canvas.getContext('2d').imageSmoothingEnabled = false;
-        canvas.style.display = 'block';
-
-        return canvas;
     }
 
     init() {
@@ -69,6 +51,21 @@ export default class ChartWidget extends Component {
                 this.legend.onDataChanged(data);
             }
         });
+    }
+
+    getNewCanvas(options) {
+        const canvas = document.createElement('canvas');
+
+        canvas.id = options.id;
+        canvas.width = options.width * options.pixelRatio;
+        canvas.height = options.height * options.pixelRatio;
+        canvas.style.width = `${options.width}px`;
+        canvas.style.height = `${options.height}px`;
+        canvas.getContext('2d').mozImageSmoothingEnabled = false;
+        canvas.getContext('2d').imageSmoothingEnabled = false;
+        canvas.style.display = 'block';
+
+        return canvas;
     }
 
     onOptionsChanged(newOptions) {

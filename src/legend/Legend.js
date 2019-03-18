@@ -3,9 +3,6 @@ import ChartLegendActiveArea from './LegendActiveArea';
 import ChartGraphic from '../chart/ChartGraphic';
 import { getLineSets } from '../utils';
 
-/**
- * Class which manage legend of the Chart
- */
 export default class ChartLegend extends CanvasComponent {
     init() {
         this.data = this.props.data;
