@@ -1,4 +1,4 @@
-import Data from '../resourses/chart_data.json';
+import Data from '../resources/chart_data.json';
 import ChartWidget from './chart/ChartWidget';
 import SwitchModeButton from './switch-mode/SwitchModeButton';
 

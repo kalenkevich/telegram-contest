@@ -14,6 +14,8 @@ export default class Chart extends CanvasComponent {
         this.chartGrid = new ChartGrid(this.element, {
             axes,
             options: this.props.options,
+            animationType: 'easeInQuad',
+            animationDuration: 800,
         });
         this.chartGraphic = new ChartGraphic(this.element, {
             lineSets,

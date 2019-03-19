@@ -12,11 +12,7 @@ export default class ChartGrid extends CanvasComponent {
     }
 
     get canAnimate() {
-        const result = this.prevState.axes !== this.state.axes;
-
-        this.prevState.axes = this.state.axes;
-
-        return result;
+        return this.prevState.axes !== this.state.axes;
     }
 
     onAxesChanged(axes) {
@@ -37,14 +33,17 @@ export default class ChartGrid extends CanvasComponent {
 
     renderWithAnimation() {
         const {
-            animationDuration = 500,
-            animationType = 'easeInOutQuad',
+            animationDuration,
+            animationType,
         } = this.props;
         const delta = 400;
 
         animate({
             onAnimationStarted: () => this.state.isAnimationInProgress = true,
-            onAnimationFinished: () => this.state.isAnimationInProgress = false,
+            onAnimationFinished: () => {
+                this.state.isAnimationInProgress = false;
+                this.prevState.axes = this.state.axes;
+            },
             duration: animationDuration,
             timing: (timeFraction) => {
                 const { axes } = this.prevState;
@@ -128,10 +127,8 @@ export default class ChartGrid extends CanvasComponent {
     }
 
     renderWithoutAnimation() {
-        requestAnimationFrame(() => {
-            this.renderXAxis(this.state.axes.x);
-            this.renderYAxis(this.state.axes.y);
-        });
+        this.renderXAxis(this.state.axes.x);
+        this.renderYAxis(this.state.axes.y);
     }
 
     renderXAxis(xAxis) {

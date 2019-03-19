@@ -4,8 +4,8 @@
   "description": "Chart for telegram contest",
   "main": "src/index.js",
   "scripts": {
-    "build": "webpack",
-    "start:dev": "webpack-dev-server"
+    "build": "webpack --mode production --config webpack.config.js",
+    "start:dev": "webpack-dev-server --mode development --config webpack.config.js"
   },
   "repository": {
     "type": "git",
