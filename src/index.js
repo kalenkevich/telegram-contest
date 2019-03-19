@@ -9,15 +9,15 @@ const dayModeOptions = {
         color: '#000000'
     },
     chart: {
-        width: 800,
+        width: 1200,
         height: 500,
         popupColor: '#FFFFFF'
     },
     legend: {
-        width: 800,
+        width: 1200,
         height: 50,
         activeArea: {
-            defaultWidth: 800 / 4,
+            defaultWidth: 1200 / 4,
             stretchBorderWidth: 5,
         },
         overlayColor: '#EDF0F2',
@@ -56,7 +56,7 @@ const nightModeOptions = {
 };
 
 window.onload = function () {
-    const chart = new ChartWidget(document.getElementById('chart-widget'), Data[0], dayModeOptions);
+    const chart = new ChartWidget(document.getElementById('chart-widget'), { data: Data[0], options: dayModeOptions });
     const switchModeButton = new SwitchModeButton(document.getElementById('switch-mode-button'), {
         isDayMode: true,
         onSwitchMode: (isDayMode) => {

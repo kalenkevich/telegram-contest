@@ -1,16 +1,22 @@
+import { throttle } from '../utils';
+import { THROTTLE_TIME_FOR_WINDOW_RESIZE } from '../contansts';
 import ChartLegend from '../legend/Legend';
 import CheckboxPanel from '../panel/CheckboxPanel';
 import Component from '../base/Component';
 import Chart from './Chart';
 
 export default class ChartWidget extends Component {
-    constructor(element, data, options) {
-        super(element, { data, options });
-    }
-
     init() {
         const { options, data } = this.props;
+        this.state = { originalOptions: options };
 
+        this.onWindowResize = throttle(this.onWindowResize.bind(this), THROTTLE_TIME_FOR_WINDOW_RESIZE);
+        window.onresize = this.onWindowResize;
+
+        this.setupComponents(this.getOptions(), data);
+    }
+
+    setupComponents(options, data) {
         this.title = document.createElement('h2');
         this.chartElement = this.getNewCanvas({
             id: 'chart',
@@ -53,6 +59,42 @@ export default class ChartWidget extends Component {
         });
     }
 
+    getOptions() {
+        const currentOptions = JSON.parse(JSON.stringify(this.props.options));
+        const originalOptions = this.state.originalOptions;
+        const windowDimension = this.getWindowDimension();
+
+        if (currentOptions.chart.width > windowDimension.width - 30) {
+            currentOptions.chart.width = windowDimension.width - 30;
+        } else if (currentOptions.chart.width < originalOptions.chart.width) {
+            currentOptions.chart.width = originalOptions.chart.width;
+        }
+
+        if (currentOptions.legend.width > windowDimension.width - 30) {
+            currentOptions.legend.width = windowDimension.width - 30;
+        } else if (currentOptions.legend.width < originalOptions.legend.width) {
+            currentOptions.legend.width = originalOptions.legend.width;
+        }
+
+        return currentOptions;
+    }
+
+    getWindowDimension() {
+        const { innerHeight, innerWidth } = window;
+
+        return {
+            width: innerWidth,
+            height: innerHeight,
+        };
+    }
+
+    onWindowResize() {
+        this.clear();
+        this.setupComponents(this.getOptions(), this.props.data);
+
+        this.render();
+    }
+
     getNewCanvas(options) {
         const canvas = document.createElement('canvas');
 
@@ -69,11 +111,13 @@ export default class ChartWidget extends Component {
     }
 
     onOptionsChanged(newOptions) {
+        this.state.originalOptions = newOptions;
         this.props.options = newOptions;
+        this.props.options = this.getOptions();
 
-        this.chart.onOptionsChanged(newOptions);
-        this.legend.onOptionsChanged(newOptions);
-        this.buttonsPanel.onOptionsChanged(newOptions);
+        this.chart.onOptionsChanged(this.props.options);
+        this.legend.onOptionsChanged(this.props.options);
+        this.buttonsPanel.onOptionsChanged(this.props.options);
 
         this.render();
     }
