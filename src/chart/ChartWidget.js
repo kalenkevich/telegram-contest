@@ -64,14 +64,14 @@ export default class ChartWidget extends Component {
         const originalOptions = this.state.originalOptions;
         const windowDimension = this.getWindowDimension();
 
-        if (currentOptions.chart.width > windowDimension.width - 30) {
-            currentOptions.chart.width = windowDimension.width - 30;
+        if (currentOptions.chart.width > windowDimension.width - 25) {
+            currentOptions.chart.width = windowDimension.width - 25;
         } else if (currentOptions.chart.width < originalOptions.chart.width) {
             currentOptions.chart.width = originalOptions.chart.width;
         }
 
-        if (currentOptions.legend.width > windowDimension.width - 30) {
-            currentOptions.legend.width = windowDimension.width - 30;
+        if (currentOptions.legend.width > windowDimension.width - 25) {
+            currentOptions.legend.width = windowDimension.width - 25;
         } else if (currentOptions.legend.width < originalOptions.legend.width) {
             currentOptions.legend.width = originalOptions.legend.width;
         }

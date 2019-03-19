@@ -24,12 +24,31 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.onMouseDown = throttle(this.onMouseDown.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.onMouseMove = throttle(this.onMouseMove.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.element.addEventListener("mousedown", this.onMouseDown);
+        this.element.addEventListener("touchstart", this.onMouseDown, { passive: true });
         this.element.addEventListener("mousemove", this.onMouseMove);
 
         this.onActiveDataChange();
     }
 
-    getMouseAlignmentData(pageX, pageY) {
+    getPageCoors(event) {
+        if (event instanceof MouseEvent) {
+            return {
+                pageX: event.pageX,
+                pageY: event.pageY,
+            }
+        }
+
+        if (event instanceof TouchEvent) {
+            return {
+                pageX: event.changedTouches[0].pageX,
+                pageY: event.changedTouches[0].pageY,
+            };
+        }
+    }
+
+    getMouseAlignmentData(event) {
+        const { pageX, pageY } = this.getPageCoors(event);
+
         const { legend, pixelRatio } = this.props.options;
         const grabOffset = {
             x: pageX - this.offset.left - this.pos.x,
@@ -64,7 +83,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             isLeftBorder,
             isRightBorder,
             isPreviewArea,
-        } = this.getMouseAlignmentData(event.pageX, event.pageY);
+        } = this.getMouseAlignmentData(event);
 
         if (isPreviewArea) {
             this.element.style.cursor = 'pointer';
@@ -83,11 +102,11 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             isLeftBorder,
             isRightBorder,
             isPreviewArea,
-        } = this.getMouseAlignmentData(event.pageX, event.pageY);
+        } = this.getMouseAlignmentData(event);
 
         if (isLeftBorder) {
             const onMouseMove = throttle((event) => {
-                const pageX = event.pageX;
+                const { pageX } = this.getPageCoors(event);
                 let newPosX = pageX - this.offset.left - grabOffset.x;
 
                 if (newPosX < 0) {
@@ -108,12 +127,18 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
+            this.element.addEventListener("touchmove", onMouseMove, { passive: true });
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
+            });
+            this.element.addEventListener("touchend", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
             });
         } else if (isRightBorder) {
             const onMouseMove = throttle((event) => {
-                const pageX = event.pageX;
+                const { pageX } = this.getPageCoors(event);
                 let newPosX = pageX - this.offset.left;
 
                 if (newPosX < this.pos.x + legendActiveAreaStretchBorderWidth * 3) {
@@ -129,12 +154,18 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
+            this.element.addEventListener("touchmove", onMouseMove, { passive: true });
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
+            });
+            this.element.addEventListener("touchend", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
             });
         } else if (isPreviewArea) {
             const onMouseMove = throttle((event) => {
-                const pageX = event.pageX;
+                const { pageX } = this.getPageCoors(event);
                 this.pos.x = pageX - this.offset.left - grabOffset.x;
 
                 if (this.pos.x < 0) {
@@ -148,8 +179,14 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 this.onActiveDataChange();
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
             this.element.addEventListener("mousemove", onMouseMove);
+            this.element.addEventListener("touchmove", onMouseMove, { passive: true });
             this.element.addEventListener("mouseup", () => {
                 this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
+            });
+            this.element.addEventListener("touchend", () => {
+                this.element.removeEventListener('mousemove', onMouseMove);
+                this.element.removeEventListener('touchmove', onMouseMove);
             });
         }
     }

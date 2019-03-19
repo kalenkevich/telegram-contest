@@ -9,15 +9,15 @@ const dayModeOptions = {
         color: '#000000'
     },
     chart: {
-        width: 1200,
-        height: 500,
+        width: 1680,
+        height: 400,
         popupColor: '#FFFFFF'
     },
     legend: {
-        width: 1200,
+        width: 1680,
         height: 50,
         activeArea: {
-            defaultWidth: 1200 / 4,
+            defaultWidth: 1680 / 4,
             stretchBorderWidth: 5,
         },
         overlayColor: '#EDF0F2',
