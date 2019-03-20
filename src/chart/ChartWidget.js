@@ -17,14 +17,16 @@ export default class ChartWidget extends Component {
     }
 
     setupComponents(options, data) {
+        const dateNow = Date.now();
+
         this.title = document.createElement('h2');
         this.chartElement = this.getNewCanvas({
-            id: 'chart',
+            id: `chart-${dateNow}`,
             ...options.chart,
             pixelRatio: options.pixelRatio,
         });
         this.legendElement = this.getNewCanvas({
-            id: 'legend',
+            id: `legend-${dateNow}`,
             ...options.legend,
             pixelRatio: options.pixelRatio,
         });

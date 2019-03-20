@@ -5,6 +5,7 @@ import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 
 export class Popup extends Component {
     init() {
+        const { chart } = this.props.options;
         this.state = {
             isVisible: false,
             data: null,
@@ -49,14 +50,14 @@ export class Popup extends Component {
     }
 
     render() {
-        const { chart, textColor } = this.props.options;
+        const { chartElement, options: { chart, textColor } } = this.props;
         const { isVisible, data, position } = this.state;
 
         this.element.style.backgroundColor = chart.popupColor;
 
         if (isVisible && data) {
             this.element.style.visibility = 'visible';
-            this.element.style.top = `${100}px`;
+            this.element.style.top = `${chartElement.offsetTop - chartElement.clientHeight + 400}px`;
             this.element.style.left = `${position.x - 10}px`;
             this.dateElement.innerText = data.date;
             this.dateElement.style.color = textColor;
@@ -111,7 +112,10 @@ export default class ChartPopover extends CanvasComponent {
         this.element.addEventListener("mousemove", this.onMouseMove);
         this.onMouseLeave = this.onMouseLeave.bind(this);
         this.element.addEventListener("mouseleave", this.onMouseLeave);
-        this.popup = new Popup(document.createElement('div'), this.props);
+        this.popup = new Popup(document.createElement('div'), {
+            ...this.props,
+            chartElement: this.element,
+        });
         this.element.after(this.popup.element);
     }
 

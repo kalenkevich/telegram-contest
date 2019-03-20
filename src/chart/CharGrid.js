@@ -92,12 +92,11 @@ export default class ChartGrid extends CanvasComponent {
                 } = this.props;
                 const colorRGB = hexToRgb(textColor);
 
-                this.context.fillStyle = textColor;
                 this.context.strokeStyle = primaryChartColor;
                 this.context.font = `${axis.fontSize * pixelRatio}px Arial`;
                 this.context.lineWidth = lineWidth * pixelRatio;
-                this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(1 - progress).toFixed(2)})`;
 
+                this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(1 - progress).toFixed(2)})`;
                 (prevXAxis.scales || []).forEach((scale) => {
                     this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
                 });

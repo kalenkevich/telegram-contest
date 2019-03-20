@@ -9,15 +9,15 @@ const dayModeOptions = {
         color: '#000000'
     },
     chart: {
-        width: 1680,
+        width: window.innerWidth,
         height: 400,
         popupColor: '#FFFFFF'
     },
     legend: {
-        width: 1680,
+        width: window.innerWidth,
         height: 50,
         activeArea: {
-            defaultWidth: 1680 / 4,
+            defaultWidth: window.innerWidth / 4,
             stretchBorderWidth: 5,
         },
         overlayColor: '#EDF0F2',
@@ -55,19 +55,32 @@ const nightModeOptions = {
     textColor: '#EDF0F2',
 };
 
+const createChartWidget = function (index, data, options) {
+    const element = document.createElement('div');
+    element.id = `chart-widget-${index}`;
+    document.body.appendChild(element);
+
+    return new ChartWidget(element, { data, options });
+};
+
 window.onload = function () {
-    const chart = new ChartWidget(document.getElementById('chart-widget'), { data: Data[0], options: dayModeOptions });
-    const switchModeButton = new SwitchModeButton(document.getElementById('switch-mode-button'), {
+    const charts = (Data || []).map((data, index) => createChartWidget(index, data, dayModeOptions));
+
+    const switchModeElement = document.createElement('div');
+    switchModeElement.id = 'switch-mode-button';
+    document.body.appendChild(switchModeElement);
+
+    const switchModeButton = new SwitchModeButton(switchModeElement, {
         isDayMode: true,
         onSwitchMode: (isDayMode) => {
             if (isDayMode) {
-                chart.onOptionsChanged(dayModeOptions);
+                (charts || []).forEach(chart => chart.onOptionsChanged(dayModeOptions));
             } else {
-                chart.onOptionsChanged(nightModeOptions);
+                (charts || []).forEach(chart => chart.onOptionsChanged(nightModeOptions));
             }
         },
     });
 
-    chart.render();
+    (charts || []).forEach(chart => chart.render());
     switchModeButton.render();
 };

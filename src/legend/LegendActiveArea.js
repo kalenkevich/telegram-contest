@@ -48,11 +48,10 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
     getMouseAlignmentData(event) {
         const { pageX, pageY } = this.getPageCoors(event);
-
         const { legend, pixelRatio } = this.props.options;
         const grabOffset = {
-            x: pageX - this.offset.left - this.pos.x,
-            y: pageY - this.offset.top - this.pos.y,
+            x: pageX - this.element.offsetLeft - this.pos.x,
+            y: pageY - this.element.offsetTop - this.pos.y,
         };
 
         const isLeftBorder = grabOffset.x >= 0
@@ -107,7 +106,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         if (isLeftBorder) {
             const onMouseMove = throttle((event) => {
                 const { pageX } = this.getPageCoors(event);
-                let newPosX = pageX - this.offset.left - grabOffset.x;
+                let newPosX = pageX - this.element.offsetLeft - grabOffset.x;
 
                 if (newPosX < 0) {
                     newPosX = 0;
@@ -139,7 +138,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         } else if (isRightBorder) {
             const onMouseMove = throttle((event) => {
                 const { pageX } = this.getPageCoors(event);
-                let newPosX = pageX - this.offset.left;
+                let newPosX = pageX - this.element.offsetLeft;
 
                 if (newPosX < this.pos.x + legendActiveAreaStretchBorderWidth * 3) {
                     newPosX = this.pos.x + legendActiveAreaStretchBorderWidth * 3;
@@ -166,7 +165,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         } else if (isPreviewArea) {
             const onMouseMove = throttle((event) => {
                 const { pageX } = this.getPageCoors(event);
-                this.pos.x = pageX - this.offset.left - grabOffset.x;
+                this.pos.x = pageX - this.element.offsetLeft - grabOffset.x;
 
                 if (this.pos.x < 0) {
                     this.pos.x = 0;
