@@ -57,8 +57,8 @@ export default class CheckboxPanel extends Component {
                 label.appendChild(checkbox);
                 label.appendChild(checkmark);
 
-                checkbox.onclick = () => {
-                    if (checkbox.checked) {
+                const onClick = (event) => {
+                    if (event.target.checked) {
                         const column = (this.props.data.columns || []).find(column => column[0] === name);
 
                         data.columns.push(column);
@@ -91,6 +91,8 @@ export default class CheckboxPanel extends Component {
                         `;
                     }
                 };
+
+                checkbox.addEventListener('click', onClick);
 
                 checkboxes.push(label);
             }

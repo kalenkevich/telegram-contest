@@ -11,9 +11,14 @@ export default class ChartWidget extends Component {
         this.state = { originalOptions: options };
 
         this.onWindowResize = throttle(this.onWindowResize.bind(this), THROTTLE_TIME_FOR_WINDOW_RESIZE);
-        window.onresize = this.onWindowResize;
+
+        window.addEventListener('resize', this.onWindowResize);
 
         this.setupComponents(this.getOptions(), data);
+    }
+
+    destroy() {
+        window.removeEventListener('resize', this.onWindowResize);
     }
 
     setupComponents(options, data) {

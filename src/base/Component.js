@@ -15,7 +15,10 @@ export default class Component {
 
     init() {}
 
+    destroy() {}
+
     clear() {
+        this.children.forEach(child => child.destroy());
         this.element.innerHTML = '';
     }
 

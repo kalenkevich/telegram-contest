@@ -30,6 +30,12 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.onActiveDataChange();
     }
 
+    destroy() {
+        this.element.removeEventListener("mousedown", this.onMouseDown);
+        this.element.removeEventListener("touchstart", this.onMouseDown, { passive: true });
+        this.element.removeEventListener("mousemove", this.onMouseMove);
+    }
+
     getPageCoors(event) {
         if (event instanceof MouseEvent) {
             return {

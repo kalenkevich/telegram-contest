@@ -119,6 +119,11 @@ export default class ChartPopover extends CanvasComponent {
         this.element.after(this.popup.element);
     }
 
+    destroy() {
+        this.element.removeEventListener("mousemove", this.onMouseMove);
+        this.element.removeEventListener("mouseleave", this.onMouseLeave);
+    }
+
     onLineSetsChanged(lineSets) {
         this.lineSets = lineSets;
 
