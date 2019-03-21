@@ -30,7 +30,7 @@ export default class ChartGraphic extends CanvasComponent {
         const { animationType = 'none' } = this.props;
         const withAnimation = this.canAnimate && animationType !== 'none';
 
-        false ? this.renderWithAnimation() : this.renderWithoutAnimation();
+        withAnimation ? this.renderWithAnimation() : this.renderWithoutAnimation();
     }
 
     renderWithoutAnimation() {
@@ -111,25 +111,27 @@ export default class ChartGraphic extends CanvasComponent {
             draw: ({ newLinesState, oldLinesState, progress }) => {
                 this.context.lineWidth = lineWidth * pixelRatio;
 
-                (oldLinesState || []).forEach((lineState) => {
-                    const { line, color } = lineState;
+                (newLinesState || []).forEach((lineState, index) => {
+                    const {line, color} = lineState;
                     const rgbColor = hexToRgb(color);
                     const path = new Path2D();
 
-                    path.moveTo(line.x1, line.y1);
-                    path.lineTo(line.x2, line.y2);
+                    if (oldLinesState[index]) {
+                        const oldLine = oldLinesState[index].line;
+                        const deltaY1 = line.y1 - oldLine.y1;
+                        const deltaY2 = line.y2 - oldLine.y2;
 
-                    this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
-                    this.context.stroke(path);
-                });
+                        path.moveTo(line.x1, line.y1 -
+                            ((1 - progress) * deltaY1));
+                        path.lineTo(line.x2, line.y2 -
+                            ((1 - progress) * deltaY2));
+                    } else {
+                        const deltaY1 = line.y1 - this.element.height / 2;
+                        const deltaY2 = line.y2 - this.element.height / 2;
 
-                (newLinesState || []).forEach((lineState) => {
-                    const { line, color } = lineState;
-                    const rgbColor = hexToRgb(color);
-                    const path = new Path2D();
-
-                    path.moveTo(line.x1, line.y1);
-                    path.lineTo(line.x2, line.y2);
+                        path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
+                        path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
+                    }
 
                     this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
                     this.context.stroke(path);
