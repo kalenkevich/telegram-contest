@@ -5,20 +5,16 @@ import CanvasComponent from '../base/CanvasComponent';
 export default class ChartLegendActiveArea extends CanvasComponent {
     init() {
         const { legend } = this.props.options;
-        this.data = this.props.data;
-        this.dim = {
-            width: legend.activeArea.defaultWidth,
-            height: legend.height,
-        };
-        this.pos = {
-            x: legend.width - legend.activeArea.defaultWidth,
-            y: 0,
-        };
-        this.offset = {
-            left: this.element.offsetLeft,
-            top: this.element.offsetTop,
-            width: this.element.offsetWidth,
-            height: this.element.offsetHeight,
+        this.state = {
+            data: this.props.data,
+            pos: {
+                x: legend.width - legend.activeArea.defaultWidth,
+                y: 0,
+            },
+            dim: {
+                width: legend.activeArea.defaultWidth,
+                height: legend.height,
+            }
         };
 
         this.onMouseDown = throttle(this.onMouseDown.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
@@ -56,24 +52,24 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         const { pageX, pageY } = this.getPageCoors(event);
         const { legend, pixelRatio } = this.props.options;
         const grabOffset = {
-            x: pageX - this.element.offsetLeft - this.pos.x,
-            y: pageY - this.element.offsetTop - this.pos.y,
+            x: pageX - this.element.offsetLeft - this.state.pos.x,
+            y: pageY - this.element.offsetTop - this.state.pos.y,
         };
 
         const isLeftBorder = grabOffset.x >= 0
             && grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height * pixelRatio;
+            && grabOffset.y <= this.state.dim.height * pixelRatio;
 
-        const isRightBorder = grabOffset.x <= this.dim.width
-            && this.dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
+        const isRightBorder = grabOffset.x <= this.state.dim.width
+            && this.state.dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height * pixelRatio;
+            && grabOffset.y <= this.state.dim.height * pixelRatio;
 
         const isPreviewArea = grabOffset.x >= legend.activeArea.stretchBorderWidth
-            && grabOffset.x <= this.dim.width - legend.activeArea.stretchBorderWidth
+            && grabOffset.x <= this.state.dim.width - legend.activeArea.stretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height * pixelRatio;
+            && grabOffset.y <= this.state.dim.height * pixelRatio;
 
         return {
             grabOffset,
@@ -118,16 +114,16 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                     newPosX = 0;
                 }
 
-                if (newPosX > this.pos.x + this.dim.width - legendActiveAreaStretchBorderWidth * 3) {
-                    newPosX = this.dim.width + this.pos.x - legendActiveAreaStretchBorderWidth * 3;
+                if (newPosX > this.state.pos.x + this.state.dim.width - legendActiveAreaStretchBorderWidth * 3) {
+                    newPosX = this.state.dim.width + this.state.pos.x - legendActiveAreaStretchBorderWidth * 3;
                 }
 
-                if (newPosX + this.dim.width > this.element.width) {
-                    newPosX = this.element.width - this.dim.width;
+                if (newPosX + this.state.dim.width > this.element.width) {
+                    newPosX = this.element.width - this.state.dim.width;
                 }
 
-                this.dim.width += this.pos.x - newPosX;
-                this.pos.x = newPosX;
+                this.state.dim.width += this.state.pos.x - newPosX;
+                this.state.pos.x = newPosX;
                 this.onActiveDataChange();
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
@@ -146,15 +142,15 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 const { pageX } = this.getPageCoors(event);
                 let newPosX = pageX - this.element.offsetLeft;
 
-                if (newPosX < this.pos.x + legendActiveAreaStretchBorderWidth * 3) {
-                    newPosX = this.pos.x + legendActiveAreaStretchBorderWidth * 3;
+                if (newPosX < this.state.pos.x + legendActiveAreaStretchBorderWidth * 3) {
+                    newPosX = this.state.pos.x + legendActiveAreaStretchBorderWidth * 3;
                 }
 
                 if (newPosX > this.element.width) {
                     newPosX = this.element.width;
                 }
 
-                this.dim.width = newPosX - this.pos.x;
+                this.state.dim.width = newPosX - this.state.pos.x;
                 this.onActiveDataChange();
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
@@ -171,14 +167,14 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         } else if (isPreviewArea) {
             const onMouseMove = throttle((event) => {
                 const { pageX } = this.getPageCoors(event);
-                this.pos.x = pageX - this.element.offsetLeft - grabOffset.x;
+                this.state.pos.x = pageX - this.element.offsetLeft - grabOffset.x;
 
-                if (this.pos.x < 0) {
-                    this.pos.x = 0;
+                if (this.state.pos.x < 0) {
+                    this.state.pos.x = 0;
                 }
 
-                if (this.pos.x + this.dim.width > this.element.width / pixelRatio) {
-                    this.pos.x = this.element.width / pixelRatio - this.dim.width;
+                if (this.state.pos.x + this.state.dim.width > this.element.width / pixelRatio) {
+                    this.state.pos.x = this.element.width / pixelRatio - this.state.dim.width;
                 }
 
                 this.onActiveDataChange();
@@ -247,15 +243,15 @@ export default class ChartLegendActiveArea extends CanvasComponent {
     }
 
     onDataChanged(data) {
-        this.data = data;
+        this.state.data = data;
         this.onActiveDataChange();
     }
 
     onActiveDataChange() {
         this.rerender();
         const activeData = {
-            ...this.data,
-            columns: this.getActiveColumns(this.data, this.pos, this.dim),
+            ...this.state.data,
+            columns: this.getActiveColumns(this.state.data, this.state.pos, this.state.dim),
         };
 
         this.props.onDataChange(activeData);
@@ -281,22 +277,22 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.context.fillStyle = rgbaStyle;
         this.context.strokeStyle = rgbaStyle;
         this.context.strokeRect(
-            this.pos.x * pixelRatio,
-            this.pos.y * pixelRatio,
-            this.dim.width * pixelRatio,
-            this.dim.height * pixelRatio,
+            this.state.pos.x * pixelRatio,
+            this.state.pos.y * pixelRatio,
+            this.state.dim.width * pixelRatio,
+            this.state.dim.height * pixelRatio,
         );
         this.context.fillRect(
-            this.pos.x * pixelRatio,
-            this.pos.y * pixelRatio,
+            this.state.pos.x * pixelRatio,
+            this.state.pos.y * pixelRatio,
             legendActiveAreaStretchBorderWidth * pixelRatio,
-            this.dim.height * pixelRatio,
+            this.state.dim.height * pixelRatio,
         );
         this.context.fillRect(
-            (this.pos.x + this.dim.width - legendActiveAreaStretchBorderWidth)  * pixelRatio,
-            this.pos.y * pixelRatio,
+            (this.state.pos.x + this.state.dim.width - legendActiveAreaStretchBorderWidth)  * pixelRatio,
+            this.state.pos.y * pixelRatio,
             legendActiveAreaStretchBorderWidth * pixelRatio,
-            this.dim.height * pixelRatio,
+            this.state.dim.height * pixelRatio,
         );
     }
 
@@ -308,11 +304,11 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.context.fillRect(
             0,
             0,
-            this.pos.x * pixelRatio,
+            this.state.pos.x * pixelRatio,
             this.element.height,
         );
         this.context.fillRect(
-            (this.pos.x + this.dim.width) * pixelRatio,
+            (this.state.pos.x + this.state.dim.width) * pixelRatio,
             0,
             this.element.width,
             this.element.height,

@@ -40,6 +40,7 @@ export default class Component {
         let currentParent = this.parent;
 
         if (!currentParent) {
+            this.clear();
             this.render();
 
             return;

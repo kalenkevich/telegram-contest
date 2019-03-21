@@ -117,6 +117,7 @@ export default class ChartPopover extends CanvasComponent {
             chartElement: this.element,
         });
         this.element.after(this.popup.element);
+        this.appendChild(this.popup);
     }
 
     destroy() {
