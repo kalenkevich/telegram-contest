@@ -21,7 +21,7 @@ export default class Chart extends CanvasComponent {
             lineSets,
             lineWidth: 2.5,
             animationType: 'linear',
-            animationDuration: 350,
+            animationDuration: 500,
             options: this.props.options,
         });
         this.chartPopover = new ChartPopover(this.element, {

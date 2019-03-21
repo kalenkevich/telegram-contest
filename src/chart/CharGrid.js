@@ -69,8 +69,6 @@ export default class ChartGrid extends CanvasComponent {
                     currentXAxis.addScale(scale.value, scale.x - delta + (delta * progress), scale.y);
                 });
 
-                this.rerender();
-
                 return {
                     currentXAxis,
                     prevXAxis,
@@ -81,6 +79,8 @@ export default class ChartGrid extends CanvasComponent {
                 };
             },
             draw: ({ currentXAxis, prevXAxis, currentYAxis, prevYAxis, originalAxis, progress }) => {
+                this.rerender();
+
                 const {
                     lineWidth,
                     options: {
@@ -131,7 +131,6 @@ export default class ChartGrid extends CanvasComponent {
     }
 
     renderXAxis(xAxis) {
-
         const {
             lineWidth,
             options: {

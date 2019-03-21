@@ -100,8 +100,6 @@ export default class ChartGraphic extends CanvasComponent {
                     }
                 }
 
-                this.rerender();
-
                 return {
                     oldLinesState,
                     newLinesState,

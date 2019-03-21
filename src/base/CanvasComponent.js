@@ -5,7 +5,7 @@ export default class CanvasComponent extends Component {
         return this.element.getContext("2d");
     }
 
-    clear() {
+    clear(animation) {
         this.context.clearRect(0, 0, this.element.width, this.element.height);
     }
 }
