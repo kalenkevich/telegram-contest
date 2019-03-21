@@ -82,16 +82,17 @@ export default class ChartWidget extends Component {
         } else if (currentOptions.legend.width < originalOptions.legend.width) {
             currentOptions.legend.width = originalOptions.legend.width;
         }
+        currentOptions.pixelRatio = window.devicePixelRatio;
 
         return currentOptions;
     }
 
     getWindowDimension() {
-        const { innerHeight, innerWidth } = window;
+        const { outerWidth, outerHeight } = window;
 
         return {
-            width: innerWidth,
-            height: innerHeight,
+            width: outerWidth,
+            height: outerHeight,
         };
     }
 
