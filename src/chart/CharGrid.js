@@ -98,7 +98,7 @@ export default class ChartGrid extends CanvasComponent {
 
                 this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(1 - progress).toFixed(2)})`;
                 (prevXAxis.scales || []).forEach((scale) => {
-                    this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
+                    this.context.fillText(scale.value, scale.x - 40, scale.y - 10);
                 });
 
                 (prevYAxis.scales || []).forEach((scale) => {
@@ -107,7 +107,7 @@ export default class ChartGrid extends CanvasComponent {
 
                 this.context.fillStyle = `rgba(${colorRGB.r}, ${colorRGB.g}, ${colorRGB.b}, ${(progress).toFixed(2)})`;
                 (currentXAxis.scales || []).forEach((scale) => {
-                    this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
+                    this.context.fillText(scale.value, scale.x - 40, scale.y - 10);
                 });
                 (currentYAxis.scales || []).forEach((scale) => {
                     this.context.fillText(scale.value, scale.x + 10, scale.y - 10);
@@ -146,7 +146,7 @@ export default class ChartGrid extends CanvasComponent {
         this.context.lineWidth = lineWidth * pixelRatio;
 
         (xAxis.scales || []).forEach((scale) => {
-            this.context.fillText(scale.value, scale.x + 20, scale.y - 10);
+            this.context.fillText(scale.value, scale.x - 40, scale.y - 10);
         });
     }
 

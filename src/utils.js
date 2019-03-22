@@ -155,20 +155,50 @@ export const getFormattedDate = (date) => {
     return '';
 };
 
-export const getXAxis = (data, elementWidth, elementHeight, options) => {
-    const { axis: { xAxisType, scale: axisScale } } = options;
-    const xAxisColumn = (data.columns || []).find(column => column[0] === xAxisType);
-    const stepValueIndex = Math.floor((xAxisColumn.length - 2) / axisScale);
+export const getNearestValueIndexes = (x, lineSets, options) => {
+    const { pixelRatio, axis: { xAxisType }  } = options;
+
+    return (lineSets || []).reduce((nearestValueIndexes, lineSet) => {
+        const isXAxisColumn = lineSet.name === xAxisType;
+
+        if (isXAxisColumn) {
+            nearestValueIndexes.push({ index: -1, resultX: 0 });
+
+            return nearestValueIndexes;
+        }
+
+        const { index, resultX } = (lineSet.lines || []).reduce((result, line, index) => {
+            const distance = Math.abs(x * pixelRatio - line.x1);
+
+            if (result.minDistance > distance) {
+                return {
+                    index,
+                    minDistance: distance,
+                    resultX: line.x1,
+                }
+            }
+
+            return result;
+        }, { index: -1, minDistance: Infinity, resultX: 0 });
+
+        nearestValueIndexes.push({ index, resultX });
+
+        return nearestValueIndexes;
+    }, []);
+};
+
+export const getXAxis = (data, elementWidth, elementHeight, options, lineSets) => {
+    const { axis: { xAxisType, scale: axisScale }, pixelRatio } = options;
     const stepWidth = Math.floor(elementWidth / axisScale);
     const xAxis = new Axis('x');
+    const xAxisLines = (lineSets || []).find(lineSet => lineSet.name === xAxisType);
 
-    if (stepValueIndex !== -1) {
-        for (let i = 0, valueIndex = 2; i < axisScale; i++, valueIndex += stepValueIndex) {
-            const x = i * stepWidth;
-            const formattedDate = getFormattedDate(xAxisColumn[valueIndex]);
+    for (let i = 0; i < axisScale; i++) {
+        const x = i * stepWidth + 50;
+        const { index, resultX } = getNearestValueIndexes(x / pixelRatio, lineSets, options).find(value => value.index !== -1);
+        const formattedDate = getFormattedDate(xAxisLines.lines[index]);
 
-            xAxis.addScale(formattedDate, x, elementHeight);
-        }
+        xAxis.addScale(formattedDate, resultX, elementHeight);
     }
 
     return xAxis;
@@ -192,9 +222,9 @@ export const getYAxis = (data, elementHeight, options) => {
     return yAxis;
 };
 
-export const getAxes = (data, elementWidth, elementHeight, options) => {
+export const getAxes = (data, elementWidth, elementHeight, options, lineSets) => {
     return {
-        x: getXAxis(data, elementWidth, elementHeight, options),
+        x: getXAxis(data, elementWidth, elementHeight, options, lineSets),
         y: getYAxis(data, elementHeight, options),
     };
 };

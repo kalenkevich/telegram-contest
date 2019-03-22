@@ -1,6 +1,6 @@
 import Component from '../base/Component';
 import CanvasComponent from '../base/CanvasComponent';
-import { getFormattedDate, throttle } from '../utils';
+import { getFormattedDate, throttle, getNearestValueIndexes } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 
 export class Popup extends Component {
@@ -176,7 +176,7 @@ export default class ChartPopover extends CanvasComponent {
     render() {
         super.render();
 
-        const nearestValues = this.getNearestValueIndexes();
+        const nearestValues = getNearestValueIndexes(this.pos.x, this.lineSets, this.props.options).map(({ index }) => index);
 
         if (this.pos.x) {
             this.renderCursorLine();
@@ -240,28 +240,5 @@ export default class ChartPopover extends CanvasComponent {
             y: this.pos.y,
         });
         this.popup.render();
-    }
-
-    getNearestValueIndexes() {
-        const { pixelRatio } = this.props.options;
-
-        return (this.lineSets || []).reduce((nearestValueIndexes, lineSet) => {
-            const { index } = (lineSet.lines || []).reduce((result, line, index) => {
-                const distance = Math.abs(this.pos.x * pixelRatio - line.x1);
-
-                if (result.minDistance > distance) {
-                    return {
-                        index,
-                        minDistance: distance,
-                    }
-                }
-
-                return result;
-            }, { index: -1, minDistance: 100000000 });
-
-            nearestValueIndexes.push(index);
-
-            return nearestValueIndexes;
-        }, []);
     }
 }
