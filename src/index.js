@@ -41,7 +41,7 @@ const nightModeOptions = {
         color: '#EDF0F2'
     },
     chart: {
-        ...dayModeOptions.popupColor,
+        ...dayModeOptions.chart,
         popupColor: '#263240'
     },
     legend: {

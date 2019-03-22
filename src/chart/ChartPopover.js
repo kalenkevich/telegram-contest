@@ -200,15 +200,19 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     renderActiveValues(nearestValues) {
+        const { chart: { popupColor } } = this.props.options;
+
         (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
                 const lineSet = this.lineSets[lineSetIndex];
                 const line = lineSet.lines[valueIndex];
 
                 this.context.strokeStyle = lineSet.color;
+                this.context.fillStyle = popupColor;
                 this.context.lineWidth = this.props.lineWidth * this.props.options.pixelRatio;
                 this.context.beginPath();
                 this.context.arc(line.x1, line.y1, 10, 0, 2 * Math.PI);
+                this.context.fill();
                 this.context.stroke();
             }
         });

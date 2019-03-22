@@ -195,10 +195,15 @@ export const getXAxis = (data, elementWidth, elementHeight, options, lineSets) =
 
     for (let i = 0; i < axisScale; i++) {
         const x = i * stepWidth + 50;
-        const { index, resultX } = getNearestValueIndexes(x / pixelRatio, lineSets, options).find(value => value.index !== -1);
-        const formattedDate = getFormattedDate(xAxisLines.lines[index]);
+        const result = getNearestValueIndexes(x / pixelRatio, lineSets, options).find(value => value.index !== -1);
 
-        xAxis.addScale(formattedDate, resultX, elementHeight);
+        if (result) {
+            const { index, resultX } = result;
+
+            const formattedDate = getFormattedDate(xAxisLines.lines[index]);
+
+            xAxis.addScale(formattedDate, resultX, elementHeight);
+        }
     }
 
     return xAxis;

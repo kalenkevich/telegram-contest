@@ -14,13 +14,13 @@ export default class Chart extends CanvasComponent {
         this.chartGrid = new ChartGrid(this.element, {
             axes,
             options: this.props.options,
-            animationType: 'easeOutCubic',
+            animationType: 'easeInOutQuad',
             animationDuration: 500,
         });
         this.chartGraphic = new ChartGraphic(this.element, {
             lineSets,
             lineWidth: 2.5,
-            animationType: 'linear',
+            animationType: 'easeInOutQuad',
             animationDuration: 500,
             options: this.props.options,
         });
