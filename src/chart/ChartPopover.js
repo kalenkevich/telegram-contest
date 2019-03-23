@@ -3,6 +3,9 @@ import CanvasComponent from '../base/CanvasComponent';
 import { getFormattedDate, throttle, getNearestValueIndexes } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 
+export const popupStyle = (color) => `position: absolute;border-radius: 3px;display: flex;flex-direction: column;font-family: 'Arial';padding: 15px;background-color: ${color};box-shadow: 0px 1px 1px 0px rgba(0,0,0,0.3);padding: 5px;min-width: 80px;`;
+export const valuesWrapperElement = 'display: flex;justify-content: space-between;margin-top: 10px;';
+export const lineStyle = 'display: flex;flex-direction: column;margin-right: 20px;';
 export class Popup extends Component {
     init() {
         const { chart } = this.props.options;
@@ -12,27 +15,10 @@ export class Popup extends Component {
             position: { x: 0, y: 0 },
         };
         this.dateElement = document.createElement('span');
-        this.dateElement.style = `
-            font-size: 16px;
-        `;
+        this.dateElement.style = 'font-size: 16px;';
         this.valuesWrapperElement = document.createElement('div');
-        this.element.style = `
-            position: absolute;
-            border-radius: 3px;
-            display: flex;
-            flex-direction: column;
-            font-family: 'Arial';
-            padding: 15px;
-            background-color: ${chart.popupColor};
-            box-shadow: 0px 1px 1px 0px rgba(0,0,0,0.3);
-            padding: 5px;
-            min-width: 80px;
-        `;
-        this.valuesWrapperElement.style = `
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        `;
+        this.element.style = popupStyle(chart.popupColor);
+        this.valuesWrapperElement.style = valuesWrapperElement;
         this.element.appendChild(this.dateElement);
         this.element.appendChild(this.valuesWrapperElement);
     }
@@ -51,25 +37,20 @@ export class Popup extends Component {
 
     render() {
         const { chartElement, options: { chart, textColor } } = this.props;
-        const { isVisible, data, position } = this.state;
+        const { isVisible, data } = this.state;
 
         this.element.style.backgroundColor = chart.popupColor;
 
         if (isVisible && data) {
             this.element.style.visibility = 'visible';
             this.element.style.top = `${chartElement.offsetTop - chartElement.clientHeight + 400}px`;
-            this.element.style.left = `${position.x - 10}px`;
             this.dateElement.innerText = data.date;
             this.dateElement.style.color = textColor;
             this.valuesWrapperElement.innerText = '';
 
             (data.lines || []).forEach((line) => {
                 const lineContainer = document.createElement('div');
-                lineContainer.style = `
-                    display: flex;
-                    flex-direction: column;
-                    margin-right: 20px;
-                `;
+                lineContainer.style = lineStyle;
                 const valueSpan = document.createElement('span');
                 valueSpan.innerText = line.value;
                 valueSpan.style.fontSize = '20px';
@@ -83,9 +64,20 @@ export class Popup extends Component {
 
                 this.valuesWrapperElement.appendChild(lineContainer);
             });
+
+            setTimeout(() => this.updatePosition());
         } else {
             this.element.style.visibility = 'hidden';
         }
+    }
+
+    updatePosition() {
+        const { chartElement } = this.props;
+        const { position } = this.state;
+        const elementWidth = this.element.offsetWidth;
+        const delta = position.x + elementWidth > chartElement.offsetWidth ? elementWidth - 10 : 10;
+
+        this.element.style.left = `${position.x - delta}px`;
     }
 }
 
