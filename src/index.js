@@ -65,8 +65,8 @@ const createChartWidget = function (index, data, options) {
 
 window.onload = function () {
     const charts = (Data || []).map((data, index) => createChartWidget(index, data, dayModeOptions));
-
     const switchModeElement = document.createElement('div');
+
     switchModeElement.id = 'switch-mode-button';
     document.body.appendChild(switchModeElement);
 

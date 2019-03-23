@@ -19,7 +19,13 @@ export default class Component {
 
     clear() {
         this.children.forEach(child => child.destroy());
-        this.element.innerHTML = '';
+        this.removeChildren();
+    }
+
+    removeChildren() {
+        while (this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild);
+        }
     }
 
     render() {

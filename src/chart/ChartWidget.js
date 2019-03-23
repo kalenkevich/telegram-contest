@@ -88,11 +88,12 @@ export default class ChartWidget extends Component {
     }
 
     getWindowDimension() {
-        const { outerWidth, outerHeight } = window;
+        const width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        const height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
         return {
-            width: outerWidth,
-            height: outerHeight,
+            width,
+            height,
         };
     }
 

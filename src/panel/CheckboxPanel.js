@@ -1,5 +1,8 @@
 import Component from '../base/Component';
 
+export const checkboxStyles = 'opacity: 0;height: 0;width: 0;cursor: pointer;';
+export const checkmarkStyles = (color1, color2) => `position: relative;height: 25px;width: 25px;border-radius: 50%;border: 2px solid ${color1};background-color: ${color2};`;
+export const labelStyles = (primaryChartColor, textColor) => `user-select: none;margin-right: 10px;min-width: 70px;height: 22px;display: flex;flex-direction: row-reverse;align-items: center;justify-content: space-between;border: 1px solid ${primaryChartColor};border-radius: 50px;padding: 7px;font-family: 'Arial';font-size: 18px;cursor: pointer;color: ${textColor}`;
 export default class CheckboxPanel extends Component {
     render() {
         const { axis: { xAxisType }, primaryChartColor, panel: { textColor } } = this.props.options;
@@ -19,41 +22,13 @@ export default class CheckboxPanel extends Component {
 
                 checkbox.type = 'checkbox';
                 checkbox.checked = isChecked;
-                checkbox.style = `
-                    opacity: 0;
-                    height: 0;
-                    width: 0;
-                    cursor: pointer;
-                `;
+                checkbox.style = checkboxStyles;
                 checkmark.className = 'checkmark';
-                checkmark.style = `
-                    position: relative;
-                    height: 25px;
-                    width: 25px;
-                    border-radius: 50%;
-                    border: 2px solid ${color};
-                    background-color: ${color};
-                `;
+                checkmark.style = checkmarkStyles(color, color);
 
                 label.id = id;
                 label.innerText = this.props.data.names[name];
-                label.style = `
-                    user-select: none;
-                    margin-right: 10px;
-                    min-width: 70px;
-                    height: 22px;
-                    display: flex;
-                    flex-direction: row-reverse;
-                    align-items: center;
-                    justify-content: space-between;
-                    border: 1px solid ${primaryChartColor};
-                    border-radius: 50px;
-                    padding: 7px;
-                    font-family: 'Arial';
-                    font-size: 18px;
-                    cursor: pointer;
-                    color: ${textColor}
-                 `;
+                label.style = labelStyles(primaryChartColor, textColor);
                 label.appendChild(checkbox);
                 label.appendChild(checkmark);
 
@@ -65,14 +40,7 @@ export default class CheckboxPanel extends Component {
 
                         this.props.onDataChange(data);
 
-                        checkmark.style = `
-                            position: relative;
-                            height: 25px;
-                            width: 25px;
-                            border-radius: 50%;
-                            border: 2px solid ${color};
-                            background-color: ${color};
-                        `;
+                        checkmark.style = checkmarkStyles(color, color);
                     } else {
                         data = {
                             ...data,
@@ -81,14 +49,7 @@ export default class CheckboxPanel extends Component {
 
                         this.props.onDataChange(data);
 
-                        checkmark.style = `
-                            position: relative;
-                            height: 25px;
-                            width: 25px;
-                            border-radius: 50%;
-                            border: 2px solid ${color};
-                            background-color: transparent;
-                        `;
+                        checkmark.style = checkmarkStyles(color, 'transparent');
                     }
                 };
 
