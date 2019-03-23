@@ -54,7 +54,7 @@ export const throttle = (func, ms) => {
 };
 
 export const getMaxValueFromArray = (array) => {
-    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value, 0);
+    return (array || []).reduce((maxVal, value) => maxVal > value ? maxVal : value);
 };
 
 export const isLineIntersectRectangle = (x1, y1, x2, y2, minX, minY, maxX, maxY) => {
@@ -88,7 +88,7 @@ export const getMaxValueFromColumns = (data, xAxisType) => {
         const currentMaxValue = getMaxValueFromArray(values);
 
         return maxValue > currentMaxValue ? maxValue : currentMaxValue;
-    }, 0);
+    }, Infinity);
 };
 
 export const getScale = (data, elementWidth, elementHeight, xAxisType) => {
@@ -142,11 +142,12 @@ export const getLineSets = (data, elementWidth, elementHeight, options) => {
     }, []);
 };
 
-export const getFormattedDate = (date) => {
+export const getFormattedDate = (date, options = {}) => {
     if (date) {
         const formatter = new Intl.DateTimeFormat('en-EN', {
             month: 'short',
             day: 'numeric',
+            ...options,
         });
 
         return formatter.format(new Date(date));

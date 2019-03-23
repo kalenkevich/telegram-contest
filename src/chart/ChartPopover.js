@@ -6,6 +6,7 @@ import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 export const popupStyle = (color) => `position: absolute;border-radius: 3px;display: flex;flex-direction: column;font-family: 'Arial';padding: 15px;background-color: ${color};box-shadow: 0px 1px 1px 0px rgba(0,0,0,0.3);padding: 5px;min-width: 80px;`;
 export const valuesWrapperElement = 'display: flex;justify-content: space-between;margin-top: 10px;';
 export const lineStyle = 'display: flex;flex-direction: column;margin-right: 20px;';
+
 export class Popup extends Component {
     init() {
         const { chart } = this.props.options;
@@ -37,7 +38,7 @@ export class Popup extends Component {
 
     render() {
         const { chartElement, options: { chart, textColor } } = this.props;
-        const { isVisible, data } = this.state;
+        const { isVisible, data, position } = this.state;
 
         this.element.style.backgroundColor = chart.popupColor;
 
@@ -65,19 +66,12 @@ export class Popup extends Component {
                 this.valuesWrapperElement.appendChild(lineContainer);
             });
 
-            setTimeout(() => this.updatePosition());
+            const elementWidth = this.element.offsetWidth;
+            const delta = position.x + elementWidth > chartElement.offsetWidth ? elementWidth - 10 : 10;
+            this.element.style.left = `${position.x - delta}px`;
         } else {
             this.element.style.visibility = 'hidden';
         }
-    }
-
-    updatePosition() {
-        const { chartElement } = this.props;
-        const { position } = this.state;
-        const elementWidth = this.element.offsetWidth;
-        const delta = position.x + elementWidth > chartElement.offsetWidth ? elementWidth - 10 : 10;
-
-        this.element.style.left = `${position.x - delta}px`;
     }
 }
 
@@ -213,7 +207,7 @@ export default class ChartPopover extends CanvasComponent {
     renderValuesPopup(nearestValues) {
         const { axis: { xAxisType } } = this.props.options;
         const xAxisLines = (this.lineSets || []).find(({ name }) => name === xAxisType);
-        const date = getFormattedDate(xAxisLines.lines[nearestValues[1]]);
+        const date = getFormattedDate(xAxisLines.lines[nearestValues[1]], { weekday: 'short' });
         const newData = (nearestValues || []).reduce((data, valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
                 const lineSet = this.lineSets[lineSetIndex];

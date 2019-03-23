@@ -8,8 +8,9 @@ export default class CheckboxPanel extends Component {
         const { axis: { xAxisType }, primaryChartColor, panel: { textColor } } = this.props.options;
         let data = this.props.data;
 
-        this.element.innerText = '';
-        (this.props.data.columns || []).reduce((checkboxes, column) => {
+        this.removeChildren();
+
+        (this.props.data.columns || []).forEach((column) => {
             const [name,] = column;
             const color = this.props.data.colors[name];
 
@@ -17,7 +18,6 @@ export default class CheckboxPanel extends Component {
                 const label = document.createElement('label');
                 const checkbox = document.createElement('input');
                 const checkmark = document.createElement('span');
-                const id = `checkbox-${name}`;
                 let isChecked = true;
 
                 checkbox.type = 'checkbox';
@@ -26,7 +26,6 @@ export default class CheckboxPanel extends Component {
                 checkmark.className = 'checkmark';
                 checkmark.style = checkmarkStyles(color, color);
 
-                label.id = id;
                 label.innerText = this.props.data.names[name];
                 label.style = labelStyles(primaryChartColor, textColor);
                 label.appendChild(checkbox);
@@ -55,10 +54,8 @@ export default class CheckboxPanel extends Component {
 
                 checkbox.addEventListener('click', onClick);
 
-                checkboxes.push(label);
+                this.element.appendChild(label);
             }
-
-            return checkboxes;
-        }, []).forEach(checkbox => this.element.appendChild(checkbox));
+        });
     }
 }

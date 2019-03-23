@@ -22,16 +22,12 @@ export default class ChartWidget extends Component {
     }
 
     setupComponents(options, data) {
-        const dateNow = Date.now();
-
         this.title = document.createElement('h2');
         this.chartElement = this.getNewCanvas({
-            id: `chart-${dateNow}`,
             ...options.chart,
             pixelRatio: options.pixelRatio,
         });
         this.legendElement = this.getNewCanvas({
-            id: `legend-${dateNow}`,
             ...options.legend,
             pixelRatio: options.pixelRatio,
         });
@@ -107,7 +103,6 @@ export default class ChartWidget extends Component {
     getNewCanvas(options) {
         const canvas = document.createElement('canvas');
 
-        canvas.id = options.id;
         canvas.width = options.width * options.pixelRatio;
         canvas.height = options.height * options.pixelRatio;
         canvas.style.width = `${options.width}px`;

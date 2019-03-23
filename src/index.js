@@ -55,9 +55,8 @@ const nightModeOptions = {
     textColor: '#EDF0F2',
 };
 
-const createChartWidget = function (index, data, options) {
+const createChartWidget = (index, data, options) => {
     const element = document.createElement('div');
-    element.id = `chart-widget-${index}`;
     document.body.appendChild(element);
 
     return new ChartWidget(element, { data, options });
@@ -72,13 +71,7 @@ window.onload = function () {
 
     const switchModeButton = new SwitchModeButton(switchModeElement, {
         isDayMode: true,
-        onSwitchMode: (isDayMode) => {
-            if (isDayMode) {
-                (charts || []).forEach(chart => chart.onOptionsChanged(dayModeOptions));
-            } else {
-                (charts || []).forEach(chart => chart.onOptionsChanged(nightModeOptions));
-            }
-        },
+        onSwitchMode: (isDayMode) => (charts || []).forEach(chart => chart.onOptionsChanged(isDayMode ? dayModeOptions : nightModeOptions)),
     });
 
     (charts || []).forEach(chart => chart.render());

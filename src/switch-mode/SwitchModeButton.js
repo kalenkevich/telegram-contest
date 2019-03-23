@@ -5,7 +5,12 @@ export default class SwitchModeButton extends Component {
         const { isDayMode } = this.props;
 
         this.state = { isDayMode };
-        this.element.onclick = this.onClick.bind(this);
+        this.onClick = this.onClick.bind(this);
+        this.element.addEventListener('click', this.onClick);
+    }
+
+    destroy() {
+        this.element.removeEventListener('click', this.onClick);
     }
 
     onClick() {
@@ -17,12 +22,9 @@ export default class SwitchModeButton extends Component {
     }
 
     render() {
-        if (this.state.isDayMode) {
-            document.body.style.backgroundColor = '#FFFFFF';
-            this.element.innerText = 'Switch to Night Mode';
-        } else {
-            document.body.style.backgroundColor = '#262F3E';
-            this.element.innerText = 'Switch to Day Mode';
-        }
+        const { isDayMode } = this.state;
+
+        document.body.style.backgroundColor = isDayMode ? '#FFFFFF' : '#262F3E';
+        this.element.innerText = isDayMode ? 'Switch to Night Mode' : 'Switch to Day Mode';
     }
 }

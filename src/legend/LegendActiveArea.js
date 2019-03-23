@@ -249,12 +249,11 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
     onActiveDataChange() {
         this.rerender();
-        const activeData = {
+
+        this.props.onDataChange({
             ...this.state.data,
             columns: this.getActiveColumns(this.state.data, this.state.pos, this.state.dim),
-        };
-
-        this.props.onDataChange(activeData);
+        });
     }
 
     render() {

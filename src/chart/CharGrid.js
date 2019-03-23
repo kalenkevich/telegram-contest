@@ -26,9 +26,7 @@ export default class ChartGrid extends CanvasComponent {
             return;
         }
 
-        const canAnimate = this.canAnimate;
-
-        canAnimate ? this.renderWithAnimation() : this.renderWithoutAnimation();
+        this.canAnimate ? this.renderWithAnimation() : this.renderWithoutAnimation();
     }
 
     renderWithAnimation() {
