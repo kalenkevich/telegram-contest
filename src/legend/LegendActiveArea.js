@@ -1,4 +1,4 @@
-import { getScale, isLineIntersectRectangle, throttle, hexToRgb } from '../utils';
+import { getScale, isLineIntersectRectangle, throttle, hexToRgb, isEqual } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
 
@@ -16,6 +16,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 height: legend.height,
             }
         };
+        this.prevState = { ...this.state };
 
         this.onMouseDown = throttle(this.onMouseDown.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
         this.onMouseMove = throttle(this.onMouseMove.bind(this), THROTTLE_TIME_FOR_MOUSE_MOVE);
@@ -32,59 +33,12 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.element.removeEventListener("mousemove", this.onMouseMove);
     }
 
-    getPageCoors(event) {
-        if (event instanceof MouseEvent) {
-            return {
-                pageX: event.pageX,
-                pageY: event.pageY,
-            }
-        }
-
-        if (event instanceof TouchEvent) {
-            return {
-                pageX: event.changedTouches[0].pageX,
-                pageY: event.changedTouches[0].pageY,
-            };
-        }
-    }
-
-    getMouseAlignmentData(event) {
-        const { pageX, pageY } = this.getPageCoors(event);
-        const { legend, pixelRatio } = this.props.options;
-        const grabOffset = {
-            x: pageX - this.element.offsetLeft - this.state.pos.x,
-            y: pageY - this.element.offsetTop - this.state.pos.y,
-        };
-
-        const isLeftBorder = grabOffset.x >= 0
-            && grabOffset.x <= legend.activeArea.stretchBorderWidth
-            && grabOffset.y >= 0
-            && grabOffset.y <= this.state.dim.height * pixelRatio;
-
-        const isRightBorder = grabOffset.x <= this.state.dim.width
-            && this.state.dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
-            && grabOffset.y >= 0
-            && grabOffset.y <= this.state.dim.height * pixelRatio;
-
-        const isPreviewArea = grabOffset.x >= legend.activeArea.stretchBorderWidth
-            && grabOffset.x <= this.state.dim.width - legend.activeArea.stretchBorderWidth
-            && grabOffset.y >= 0
-            && grabOffset.y <= this.state.dim.height * pixelRatio;
-
-        return {
-            grabOffset,
-            isLeftBorder,
-            isRightBorder,
-            isPreviewArea,
-        };
-    }
-
     onMouseMove(event) {
         const {
             isLeftBorder,
             isRightBorder,
             isPreviewArea,
-        } = this.getMouseAlignmentData(event);
+        } = ChartLegendActiveArea.getMouseAlignmentData(this.state.pos, this.state.dim, this.element, event, this.props.options);
 
         if (isPreviewArea) {
             this.element.style.cursor = 'pointer';
@@ -103,11 +57,11 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             isLeftBorder,
             isRightBorder,
             isPreviewArea,
-        } = this.getMouseAlignmentData(event);
+        } = ChartLegendActiveArea.getMouseAlignmentData(this.state.pos, this.state.dim, this.element, event, this.props.options);
 
         if (isLeftBorder) {
             const onMouseMove = throttle((event) => {
-                const { pageX } = this.getPageCoors(event);
+                const { pageX } = ChartLegendActiveArea.getPageCoors(event);
                 let newPosX = pageX - this.element.offsetLeft - grabOffset.x;
 
                 if (newPosX < 0) {
@@ -139,7 +93,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             });
         } else if (isRightBorder) {
             const onMouseMove = throttle((event) => {
-                const { pageX } = this.getPageCoors(event);
+                const { pageX } = ChartLegendActiveArea.getPageCoors(event);
                 let newPosX = pageX - this.element.offsetLeft;
 
                 if (newPosX < this.state.pos.x + legendActiveAreaStretchBorderWidth * 3) {
@@ -166,7 +120,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             });
         } else if (isPreviewArea) {
             const onMouseMove = throttle((event) => {
-                const { pageX } = this.getPageCoors(event);
+                const { pageX } = ChartLegendActiveArea.getPageCoors(event);
                 this.state.pos.x = pageX - this.element.offsetLeft - grabOffset.x;
 
                 if (this.state.pos.x < 0) {
@@ -192,15 +146,88 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         }
     }
 
-    getActiveColumns(data, position, dimension) {
-        const newColumns = [];
-        const { axis: { xAxisType }, pixelRatio } = this.props.options;
-        const { scaleX, scaleY } = getScale(data, this.element.width, this.element.height, xAxisType);
+    onDataChanged(data) {
+        this.state.data = data;
+
+        this.onActiveDataChange();
+
+        this.prevState.data = this.state.data;
+    }
+
+    onActiveDataChange() {
+        this.rerender();
+
+        this.props.onDataChange({
+            ...this.state.data,
+            columns: ChartLegendActiveArea.getActiveColumns(this.state.data, this.state.pos, this.state.dim, this.element, this.props),
+        });
+
+        this.prevState.pos = this.state.pos;
+        this.prevState.dim = this.state.dim;
+    }
+
+    render() {
+        super.render();
+
+        ChartLegendActiveArea.renderActiveArea(this.state.pos, this.state.dim, this.context, this.props.options);
+        ChartLegendActiveArea.renderOverlay(this.state.pos, this.state.dim, this.element, this.context, this.props.options);
+    }
+
+    static getPageCoors(event) {
+        if (event instanceof MouseEvent) {
+            return {
+                pageX: event.pageX,
+                pageY: event.pageY,
+            }
+        }
+
+        if (event instanceof TouchEvent) {
+            return {
+                pageX: event.changedTouches[0].pageX,
+                pageY: event.changedTouches[0].pageY,
+            };
+        }
+    }
+
+    static getMouseAlignmentData(pos, dim, element, event, options) {
+        const { pageX, pageY } = ChartLegendActiveArea.getPageCoors(event);
+        const { legend, pixelRatio } = options;
+        const grabOffset = {
+            x: pageX - element.offsetLeft - pos.x,
+            y: pageY - element.offsetTop - pos.y,
+        };
+
+        const isLeftBorder = grabOffset.x >= 0
+            && grabOffset.x <= legend.activeArea.stretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= dim.height * pixelRatio;
+
+        const isRightBorder = grabOffset.x <= dim.width
+            && dim.width - grabOffset.x <= legend.activeArea.stretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= dim.height * pixelRatio;
+
+        const isPreviewArea = grabOffset.x >= legend.activeArea.stretchBorderWidth
+            && grabOffset.x <= dim.width - legend.activeArea.stretchBorderWidth
+            && grabOffset.y >= 0
+            && grabOffset.y <= dim.height * pixelRatio;
+
+        return {
+            grabOffset,
+            isLeftBorder,
+            isRightBorder,
+            isPreviewArea,
+        };
+    }
+
+    static getActiveColumns(data, position, dimension, element, props) {
+        const { axis: { xAxisType }, pixelRatio } = props.options;
+        const { scaleX, scaleY } = getScale(data, element.width, element.height, xAxisType);
         let xAxisColumnIndex = null;
         let xAxisNewColumnIndex = null;
         let isXAxisColumnFinished = false;
 
-        (data.columns || []).forEach((column, index) => {
+        return (data.columns || []).reduce((newColumns, column, index) => {
             const name = column[0];
 
             if (name === xAxisType) {
@@ -208,7 +235,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 xAxisColumnIndex = index;
                 xAxisNewColumnIndex = newColumns.length - 1;
 
-                return;
+                return newColumns;
             }
 
             newColumns.push([name]);
@@ -237,80 +264,45 @@ export default class ChartLegendActiveArea extends CanvasComponent {
             if (xAxisColumnIndex !== null && !isXAxisColumnFinished) {
                 isXAxisColumnFinished = true;
             }
-        });
 
-        return newColumns;
+            return newColumns;
+        }, []);
     }
 
-    onDataChanged(data) {
-        this.state.data = data;
-        this.onActiveDataChange();
-    }
-
-    onActiveDataChange() {
-        this.rerender();
-
-        this.props.onDataChange({
-            ...this.state.data,
-            columns: this.getActiveColumns(this.state.data, this.state.pos, this.state.dim),
-        });
-    }
-
-    render() {
-        super.render();
-
-        this.renderActiveArea();
-        this.renderOverlay();
-    }
-
-    renderActiveArea() {
-        const {
-            primaryChartColor,
-            pixelRatio,
-            legend,
-        } = this.props.options;
+    static renderActiveArea(pos, dim, context, options) {
+        const { primaryChartColor, pixelRatio, legend } = options;
         const legendActiveAreaStretchBorderWidth = legend.activeArea.stretchBorderWidth;
         const rbgColor = hexToRgb(primaryChartColor);
         const rgbaStyle = `rgba(${rbgColor.r}, ${rbgColor.g}, ${rbgColor.b}, 1)`;
 
-        this.context.fillStyle = rgbaStyle;
-        this.context.strokeStyle = rgbaStyle;
-        this.context.strokeRect(
-            this.state.pos.x * pixelRatio,
-            this.state.pos.y * pixelRatio,
-            this.state.dim.width * pixelRatio,
-            this.state.dim.height * pixelRatio,
+        context.fillStyle = rgbaStyle;
+        context.strokeStyle = rgbaStyle;
+        context.strokeRect(
+            pos.x * pixelRatio,
+            pos.y * pixelRatio,
+            dim.width * pixelRatio,
+            dim.height * pixelRatio,
         );
-        this.context.fillRect(
-            this.state.pos.x * pixelRatio,
-            this.state.pos.y * pixelRatio,
+        context.fillRect(
+            pos.x * pixelRatio,
+            pos.y * pixelRatio,
             legendActiveAreaStretchBorderWidth * pixelRatio,
-            this.state.dim.height * pixelRatio,
+            dim.height * pixelRatio,
         );
-        this.context.fillRect(
-            (this.state.pos.x + this.state.dim.width - legendActiveAreaStretchBorderWidth)  * pixelRatio,
-            this.state.pos.y * pixelRatio,
+        context.fillRect(
+            (pos.x + dim.width - legendActiveAreaStretchBorderWidth)  * pixelRatio,
+            pos.y * pixelRatio,
             legendActiveAreaStretchBorderWidth * pixelRatio,
-            this.state.dim.height * pixelRatio,
+            dim.height * pixelRatio,
         );
     }
 
-    renderOverlay() {
-        const { pixelRatio, legend: { overlayColor } } = this.props.options;
+    static renderOverlay(pos, dim, element, context, options) {
+        const { pixelRatio, legend: { overlayColor } } = options;
         const rbgColor = hexToRgb(overlayColor);
 
-        this.context.fillStyle = `rgba(${rbgColor.r}, ${rbgColor.g}, ${rbgColor.b}, 0.5)`;
-        this.context.fillRect(
-            0,
-            0,
-            this.state.pos.x * pixelRatio,
-            this.element.height,
-        );
-        this.context.fillRect(
-            (this.state.pos.x + this.state.dim.width) * pixelRatio,
-            0,
-            this.element.width,
-            this.element.height,
-        );
+        context.fillStyle = `rgba(${rbgColor.r}, ${rbgColor.g}, ${rbgColor.b}, 0.5)`;
+        context.fillRect(0, 0, pos.x * pixelRatio, element.height);
+        context.fillRect((pos.x + dim.width) * pixelRatio, 0, element.width, element.height);
     }
 }

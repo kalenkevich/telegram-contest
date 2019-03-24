@@ -30,30 +30,7 @@ export default class ChartGraphic extends CanvasComponent {
         const { animationType = 'none' } = this.props;
         const withAnimation = this.canAnimate && animationType !== 'none';
 
-        withAnimation ? this.renderWithAnimation() : this.renderWithoutAnimation();
-    }
-
-    renderWithoutAnimation() {
-        const { lineWidth, options: { axis: { xAxisType }, pixelRatio } } = this.props;
-        const { lineSets } = this.state;
-
-        this.context.lineWidth = lineWidth * pixelRatio;
-
-        for (let j = 0; j < lineSets[0].lines.length; j++) {
-            for (let i = 0; i < lineSets.length; i++) {
-                if (lineSets[i].name !== xAxisType) {
-                    const line = lineSets[i].lines[j];
-                    const path = new Path2D();
-
-                    this.context.strokeStyle = lineSets[i].color;
-
-                    path.moveTo(line.x1, line.y1);
-                    path.lineTo(line.x2, line.y2);
-
-                    this.context.stroke(path);
-                }
-            }
-        }
+        withAnimation ? this.renderWithAnimation() : ChartGraphic.renderWithoutAnimation(this.state.lineSets, this.context, this.props);
     }
 
     renderWithAnimation() {
@@ -71,70 +48,140 @@ export default class ChartGraphic extends CanvasComponent {
                 this.prevState.lineSets = this.state.lineSets;
             },
             duration: animationDuration,
-            timing: (timeFraction) => {
+            timing: (timeFraction) => AnimationEffects[animationType](timeFraction),
+            draw: (progress) => {
                 const { lineSets: currentLinesSet } = this.state;
-                const { lineSets: oldLinesSet } = this.state;
-                const progress = AnimationEffects[animationType](timeFraction);
-                const oldLinesState = [];
-                const newLinesState = [];
-
-                for (let j = 0; j < currentLinesSet[0].lines.length; j++) {
-                    for (let i = 0; i < currentLinesSet.length; i++) {
-                        if (currentLinesSet[i].name !== xAxisType) {
-                            newLinesState.push({
-                                line: currentLinesSet[i].lines[j],
-                                color: currentLinesSet[i].color,
-                            });
-                        }
-                    }
-                }
-
-                for (let j = 0; j < oldLinesSet[0].lines.length; j++) {
-                    for (let i = 0; i < oldLinesSet.length; i++) {
-                        if (oldLinesSet[i].name !== xAxisType) {
-                            newLinesState.push({
-                                line: oldLinesSet[i].lines[j],
-                                color: oldLinesSet[i].color,
-                            });
-                        }
-                    }
-                }
-
-                return {
-                    oldLinesState,
-                    newLinesState,
-                    progress,
-                };
-            },
-            draw: ({ newLinesState, oldLinesState, progress }) => {
+                const { lineSets: oldLinesSet } = this.prevState;
                 this.context.lineWidth = lineWidth * pixelRatio;
 
-                (newLinesState || []).forEach((lineState, index) => {
-                    const {line, color} = lineState;
-                    const rgbColor = hexToRgb(color);
-                    const path = new Path2D();
-
-                    if (oldLinesState[index]) {
-                        const oldLine = oldLinesState[index].line;
-                        const deltaY1 = line.y1 - oldLine.y1;
-                        const deltaY2 = line.y2 - oldLine.y2;
-
-                        path.moveTo(line.x1, line.y1 -
-                            ((1 - progress) * deltaY1));
-                        path.lineTo(line.x2, line.y2 -
-                            ((1 - progress) * deltaY2));
-                    } else {
-                        const deltaY1 = line.y1 - this.element.height / 2;
-                        const deltaY2 = line.y2 - this.element.height / 2;
-
-                        path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
-                        path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
+                ChartGraphic.getLineSetNames(oldLinesSet, currentLinesSet).forEach((setName) => {
+                    if (setName === xAxisType) {
+                        return;
                     }
 
-                    this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
-                    this.context.stroke(path);
+                    const {
+                        prevSet,
+                        currSet,
+                        appeared,
+                        disappeared,
+                        changed,
+                    } = ChartGraphic.getLineSetChangeState(setName, oldLinesSet, currentLinesSet);
+
+                    if (changed) {
+                        const { color } = currSet;
+
+                        (currSet.lines || []).forEach((line, index) => {
+                            const rgbColor = hexToRgb(color);
+                            const path = new Path2D();
+
+                            if (prevSet.lines[index]) {
+                                const oldLine = prevSet.lines[index];
+
+                                const prevLinePath = new Path2D();
+                                prevLinePath.moveTo(oldLine.x1, oldLine.y1);
+                                prevLinePath.lineTo(oldLine.x2, oldLine.y2);
+                                this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
+                                this.context.stroke(prevLinePath);
+
+                                const deltaY1 = line.y1 - oldLine.y1;
+                                const deltaY2 = line.y2 - oldLine.y2;
+
+                                path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
+                                path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
+
+                                this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
+                                this.context.stroke(path);
+                            } else {
+                                path.moveTo(line.x1, line.y1);
+                                path.lineTo(line.x2, line.y2);
+                            }
+
+                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
+                            this.context.stroke(path);
+                        });
+
+                        return;
+                    }
+
+                    if (appeared) {
+                        const { color } = currSet;
+
+                        (currSet.lines || []).forEach((line) => {
+                            const rgbColor = hexToRgb(color);
+                            const path = new Path2D();
+                            const deltaY1 = line.y1 + this.element.height;
+                            const deltaY2 = line.y2 + this.element.height;
+
+                            path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
+                            path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
+
+                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
+                            this.context.stroke(path);
+                        });
+
+                        return;
+                    }
+
+                    if (disappeared) {
+                        const { color } = prevSet;
+
+                        (prevSet.lines || []).forEach((line) => {
+                            const rgbColor = hexToRgb(color);
+                            const path = new Path2D();
+                            const deltaY1 = line.y1 + this.element.height;
+                            const deltaY2 = line.y2 + this.element.height;
+
+                            path.moveTo(line.x1, line.y1 - (progress) * deltaY1);
+                            path.lineTo(line.x2, line.y2 - (progress) * deltaY2);
+
+                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
+                            this.context.stroke(path);
+                        });
+                    }
                 });
             },
         });
+    }
+
+    static getLineSetNames(prevState, currState) {
+        const prevStateMap = (prevState || []).reduce((map, { name }) => ({ ...map, [name]: true }), {});
+        const resultMap = (currState || []).reduce((map, { name }) => ({ ...map, [name]: true }), prevStateMap);
+
+        return Object.keys(resultMap);
+    }
+
+    static getLineSetChangeState(setName, prevState, currState) {
+        const prevSet = (prevState || []).find(({ name }) => name === setName);
+        const currSet = (currState || []).find(({ name }) => name === setName);
+
+        return {
+            appeared: !prevSet && !!currSet,
+            disappeared: prevSet && !currSet,
+            changed: !!prevSet && !!currSet,
+            prevSet,
+            currSet,
+        };
+    }
+
+    static renderWithoutAnimation(lineSets, context, props) {
+        const { lineWidth, options: { axis: { xAxisType }, pixelRatio } } = props;
+
+        context.lineWidth = lineWidth * pixelRatio;
+
+        for (let j = 0; j < lineSets[0].lines.length; j++) {
+            for (let i = 0; i < lineSets.length; i++) {
+                if (lineSets[i].name !== xAxisType) {
+                    const line = lineSets[i].lines[j];
+                    const path = new Path2D();
+
+                    context.strokeStyle = lineSets[i].color;
+
+                    path.moveTo(line.x1, line.y1);
+                    path.lineTo(line.x2, line.y2);
+
+                    context.stroke(path);
+                }
+            }
+        }
     }
 }

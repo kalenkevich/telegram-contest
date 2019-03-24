@@ -14,7 +14,14 @@ export default class ChartWidget extends Component {
 
         window.addEventListener('resize', this.onWindowResize);
 
-        this.setupComponents(this.getOptions(), data);
+        this.setupComponents(ChartWidget.getOptions(options, options), data);
+    }
+
+    onWindowResize() {
+        this.clear();
+        this.setupComponents(ChartWidget.getOptions(this.props.options, this.state.originalOptions), this.props.data);
+
+        this.render();
     }
 
     destroy() {
@@ -23,11 +30,11 @@ export default class ChartWidget extends Component {
 
     setupComponents(options, data) {
         this.title = document.createElement('h2');
-        this.chartElement = this.getNewCanvas({
+        this.chartElement = ChartWidget.getNewCanvas({
             ...options.chart,
             pixelRatio: options.pixelRatio,
         });
-        this.legendElement = this.getNewCanvas({
+        this.legendElement = ChartWidget.getNewCanvas({
             ...options.legend,
             pixelRatio: options.pixelRatio,
         });
@@ -62,10 +69,9 @@ export default class ChartWidget extends Component {
         });
     }
 
-    getOptions() {
-        const currentOptions = JSON.parse(JSON.stringify(this.props.options));
-        const originalOptions = this.state.originalOptions;
-        const windowDimension = this.getWindowDimension();
+    static getOptions(options, originalOptions) {
+        const currentOptions = JSON.parse(JSON.stringify(options));
+        const windowDimension = ChartWidget.getWindowDimension();
 
         if (currentOptions.chart.width > windowDimension.width - 25) {
             currentOptions.chart.width = windowDimension.width - 25;
@@ -83,7 +89,7 @@ export default class ChartWidget extends Component {
         return currentOptions;
     }
 
-    getWindowDimension() {
+    static getWindowDimension() {
         const width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
         const height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
@@ -93,14 +99,7 @@ export default class ChartWidget extends Component {
         };
     }
 
-    onWindowResize() {
-        this.clear();
-        this.setupComponents(this.getOptions(), this.props.data);
-
-        this.render();
-    }
-
-    getNewCanvas(options) {
+    static getNewCanvas(options) {
         const canvas = document.createElement('canvas');
 
         canvas.width = options.width * options.pixelRatio;
@@ -117,7 +116,7 @@ export default class ChartWidget extends Component {
     onOptionsChanged(newOptions) {
         this.state.originalOptions = newOptions;
         this.props.options = newOptions;
-        this.props.options = this.getOptions();
+        this.props.options = ChartWidget.getOptions(this.props.options, this.state.originalOptions);
 
         this.chart.onOptionsChanged(this.props.options);
         this.legend.onOptionsChanged(this.props.options);

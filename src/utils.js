@@ -1,5 +1,6 @@
 import Line from './objects/Line';
 import Axis from './objects/Axis';
+import LineSet from './objects/LineSet';
 
 export const animate = (options) => {
     const start = performance.now();
@@ -129,14 +130,8 @@ export const getLineSets = (data, elementWidth, elementHeight, options) => {
     return (data.columns || []).reduce((linesSet, column, index) => {
         const newLines = getLines(data, index, elementWidth, elementHeight, xAxisType);
         const columnName = data.columns[index][0];
-        const nameValue = data.names[columnName];
 
-        linesSet.push({
-            name: columnName,
-            nameValue,
-            color: data.colors[columnName],
-            lines: newLines,
-        });
+        linesSet.push(new LineSet(columnName, data.names[columnName], data.colors[columnName], newLines));
 
         return linesSet;
     }, []);
@@ -247,4 +242,61 @@ export const hexToRgb = (hex) => {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : null;
+};
+
+export const isEqual = (a, b) => {
+    const isArray = Array.isArray;
+    const keyList = Object.keys;
+    const hasProp = Object.prototype.hasOwnProperty;
+
+    if (a === b) return true;
+
+    if (a && b && typeof a === 'object' && typeof b === 'object') {
+        let arrA = isArray(a);
+        let arrB = isArray(b);
+
+        if (arrA && arrB) {
+            let length = a.length;
+
+            if (length !== b.length) {
+                return false;
+            }
+
+            for (let i = length; i-- !== 0;) {
+                if (!isEqual(a[i], b[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (arrA != arrB) {
+            return false;
+        }
+
+        let keys = keyList(a);
+        length = keys.length;
+
+        if (length !== keyList(b).length)
+            return false;
+
+        for (let i = length; i-- !== 0;) {
+            if (!hasProp.call(b, keys[i])) {
+                return false;
+            }
+        }
+
+        for (let i = length; i-- !== 0;) {
+            const key = keys[i];
+
+            if (!isEqual(a[key], b[key])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return a !== a && b !== b;
 };

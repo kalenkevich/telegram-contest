@@ -8,8 +8,8 @@ export default class Chart extends CanvasComponent {
     init() {
         this.data = this.props.data;
 
-        const lineSets = this.getLineSets();
-        const axes = this.getAxes(lineSets);
+        const lineSets = getLineSets(this.data, this.element.width, this.element.height, this.props.options);
+        const axes = getAxes(this.data, this.element.width, this.element.height, this.props.options, lineSets);
 
         this.chartGrid = new ChartGrid(this.element, {
             axes,
@@ -38,19 +38,11 @@ export default class Chart extends CanvasComponent {
     onDataChanged(data) {
         this.data = data;
 
-        const lineSets = this.getLineSets();
-        const axes = this.getAxes(lineSets);
+        const lineSets = getLineSets(this.data, this.element.width, this.element.height, this.props.options);
+        const axes = getAxes(this.data, this.element.width, this.element.height, this.props.options, lineSets);
 
         this.chartGrid.onAxesChanged(axes);
         this.chartGraphic.onLineSetsChanged(lineSets);
         this.chartPopover.onLineSetsChanged(lineSets);
-    }
-
-    getAxes(lineSets) {
-        return getAxes(this.data, this.element.width, this.element.height, this.props.options, lineSets);
-    }
-
-    getLineSets() {
-        return getLineSets(this.data, this.element.width, this.element.height, this.props.options);
     }
 }

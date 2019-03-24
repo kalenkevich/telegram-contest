@@ -26,7 +26,7 @@ export default class ChartGrid extends CanvasComponent {
             return;
         }
 
-        this.canAnimate ? this.renderWithAnimation() : this.renderWithoutAnimation();
+        this.canAnimate ? this.renderWithAnimation() : ChartGrid.renderWithoutAnimation(this.state.axes, this.context, this.element, this.props);
     }
 
     renderWithAnimation() {
@@ -123,12 +123,12 @@ export default class ChartGrid extends CanvasComponent {
         });
     }
 
-    renderWithoutAnimation() {
-        this.renderXAxis(this.state.axes.x);
-        this.renderYAxis(this.state.axes.y);
+    static renderWithoutAnimation(axes, context, element, props) {
+        this.renderXAxis(axes.x, context, props);
+        this.renderYAxis(axes.y, context, element, props);
     }
 
-    renderXAxis(xAxis) {
+    static renderXAxis(xAxis, context, props) {
         const {
             lineWidth,
             options: {
@@ -137,18 +137,16 @@ export default class ChartGrid extends CanvasComponent {
                 pixelRatio,
                 axis,
             },
-        } = this.props;
-        this.context.fillStyle = textColor;
-        this.context.strokeStyle = primaryChartColor;
-        this.context.font = `${axis.fontSize * pixelRatio}px Arial`;
-        this.context.lineWidth = lineWidth * pixelRatio;
+        } = props;
+        context.fillStyle = textColor;
+        context.strokeStyle = primaryChartColor;
+        context.font = `${axis.fontSize * pixelRatio}px Arial`;
+        context.lineWidth = lineWidth * pixelRatio;
 
-        (xAxis.scales || []).forEach((scale) => {
-            this.context.fillText(scale.value, scale.x - 40, scale.y - 10);
-        });
+        (xAxis.scales || []).forEach((scale) => context.fillText(scale.value, scale.x - 40, scale.y - 10));
     }
 
-    renderYAxis(yAxis) {
+    static renderYAxis(yAxis, context, element, props) {
         const {
             lineWidth,
             options: {
@@ -157,20 +155,20 @@ export default class ChartGrid extends CanvasComponent {
                 pixelRatio,
                 axis,
             },
-        } = this.props;
-        this.context.fillStyle = textColor;
-        this.context.font = `${axis.fontSize * pixelRatio}px Arial`;
-        this.context.lineWidth = lineWidth * pixelRatio;
+        } = props;
+        context.fillStyle = textColor;
+        context.font = `${axis.fontSize * pixelRatio}px Arial`;
+        context.lineWidth = lineWidth * pixelRatio;
 
         (yAxis.scales || []).forEach((scale) => {
             const path = new Path2D();
 
             path.moveTo(0, scale.y);
-            path.lineTo(this.element.width, scale.y);
+            path.lineTo(element.width, scale.y);
 
-            this.context.fillText(scale.value, scale.x + 10, scale.y - 10);
-            this.context.strokeStyle = primaryChartColor;
-            this.context.stroke(path);
+            context.fillText(scale.value, scale.x + 10, scale.y - 10);
+            context.strokeStyle = primaryChartColor;
+            context.stroke(path);
         });
     }
 }

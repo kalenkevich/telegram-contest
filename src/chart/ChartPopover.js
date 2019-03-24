@@ -123,17 +123,17 @@ export default class ChartPopover extends CanvasComponent {
         this.popup.onOptionsChanged(newOptions);
     }
 
-    getMouseAlignmentData(pageX, pageY) {
-        const { legendActiveAreaStretchBorderWidth } = this.props.options;
+    static getMouseAlignmentData(offset, dim, pageX, pageY, options) {
+        const { legendActiveAreaStretchBorderWidth } = options;
         const grabOffset = {
-            x: pageX - this.offset.left,
-            y: pageY - this.offset.top,
+            x: pageX - offset.left,
+            y: pageY - offset.top,
         };
 
         const isChartArea = grabOffset.x >= legendActiveAreaStretchBorderWidth
-            && grabOffset.x <= this.dim.width - legendActiveAreaStretchBorderWidth
+            && grabOffset.x <= dim.width - legendActiveAreaStretchBorderWidth
             && grabOffset.y >= 0
-            && grabOffset.y <= this.dim.height;
+            && grabOffset.y <= dim.height;
 
         return {
             grabOffset,
@@ -150,7 +150,7 @@ export default class ChartPopover extends CanvasComponent {
     }
 
     onMouseMove(event) {
-        const { grabOffset } = this.getMouseAlignmentData(event.pageX, event.pageY);
+        const { grabOffset } = ChartPopover.getMouseAlignmentData(this.offset, this.dim, event.pageX, event.pageY, this.props.options);
 
         this.pos.x = grabOffset.x;
         this.pos.y = grabOffset.y;
@@ -165,41 +165,41 @@ export default class ChartPopover extends CanvasComponent {
         const nearestValues = getNearestValueIndexes(this.pos.x, this.lineSets, this.props.options).map(({ index }) => index);
 
         if (this.pos.x) {
-            this.renderCursorLine();
-            this.renderActiveValues(nearestValues);
+            ChartPopover.renderCursorLine(this.pos, this.dim, this.context, this.props);
+            ChartPopover.renderActiveValues(this.lineSets, nearestValues, this.context, this.props);
         }
 
         this.renderValuesPopup(nearestValues);
     }
 
-    renderCursorLine() {
-        const { pixelRatio, primaryChartColor } = this.props.options;
+    static renderCursorLine(pos, dim, context, props) {
+        const { pixelRatio, primaryChartColor } = props.options;
         const path = new Path2D();
 
-        this.context.strokeStyle = primaryChartColor;
-        this.context.lineWidth = this.props.lineWidth * this.props.options.pixelRatio;
+        context.strokeStyle = primaryChartColor;
+        context.lineWidth = props.lineWidth * props.options.pixelRatio;
 
-        path.moveTo(this.pos.x * pixelRatio, 0);
-        path.lineTo(this.pos.x * pixelRatio, this.dim.height);
+        path.moveTo(pos.x * pixelRatio, 0);
+        path.lineTo(pos.x * pixelRatio, dim.height);
 
-        this.context.stroke(path);
+        context.stroke(path);
     }
 
-    renderActiveValues(nearestValues) {
-        const { chart: { popupColor } } = this.props.options;
+    static renderActiveValues(lineSets, nearestValues, context, props) {
+        const { chart: { popupColor } } = props.options;
 
         (nearestValues || []).forEach((valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
-                const lineSet = this.lineSets[lineSetIndex];
+                const lineSet = lineSets[lineSetIndex];
                 const line = lineSet.lines[valueIndex];
 
-                this.context.strokeStyle = lineSet.color;
-                this.context.fillStyle = popupColor;
-                this.context.lineWidth = this.props.lineWidth * this.props.options.pixelRatio;
-                this.context.beginPath();
-                this.context.arc(line.x1, line.y1, 10, 0, 2 * Math.PI);
-                this.context.fill();
-                this.context.stroke();
+                context.strokeStyle = lineSet.color;
+                context.fillStyle = popupColor;
+                context.lineWidth = props.lineWidth * props.options.pixelRatio;
+                context.beginPath();
+                context.arc(line.x1, line.y1, 10, 0, 2 * Math.PI);
+                context.fill();
+                context.stroke();
             }
         });
     }
@@ -211,7 +211,7 @@ export default class ChartPopover extends CanvasComponent {
         const newData = (nearestValues || []).reduce((data, valueIndex, lineSetIndex) => {
             if (valueIndex !== -1) {
                 const lineSet = this.lineSets[lineSetIndex];
-                const name = lineSet.nameValue;
+                const name = lineSet.title;
                 const color = lineSet.color;
                 const value = lineSet.lines[valueIndex].value;
 
