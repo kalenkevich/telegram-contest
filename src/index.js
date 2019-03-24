@@ -36,6 +36,7 @@ const dayModeOptions = {
 
 const nightModeOptions = {
     ...dayModeOptions,
+    pixelRatio: window.devicePixelRatio || 1,
     title: {
         ...dayModeOptions.title,
         color: '#EDF0F2'

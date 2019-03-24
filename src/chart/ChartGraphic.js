@@ -1,12 +1,13 @@
 import { animate, hexToRgb } from '../utils';
 import CanvasComponent from '../base/CanvasComponent';
 import AnimationEffects from '../animation/Effects';
+import DataChangeEvent from '../base/DataChangeEvent';
 
 export default class ChartGraphic extends CanvasComponent {
     init() {
         const { lineSets } = this.props;
 
-        this.state = { lineSets };
+        this.state = { lineSets, lastChangeEvent: null };
         this.prevState = { lineSets };
     }
 
@@ -14,8 +15,9 @@ export default class ChartGraphic extends CanvasComponent {
         return this.prevState.lineSets !== this.state.lineSets;
     }
 
-    onLineSetsChanged(lineSets) {
+    onLineSetsChanged(lineSets, event) {
         this.state.lineSets = lineSets;
+        this.state.lastChangeEvent = event;
 
         this.rerender();
     }
@@ -50,7 +52,7 @@ export default class ChartGraphic extends CanvasComponent {
             duration: animationDuration,
             timing: (timeFraction) => AnimationEffects[animationType](timeFraction),
             draw: (progress) => {
-                const { lineSets: currentLinesSet } = this.state;
+                const { lineSets: currentLinesSet, lastChangeEvent } = this.state;
                 const { lineSets: oldLinesSet } = this.prevState;
                 this.context.lineWidth = lineWidth * pixelRatio;
 
@@ -65,43 +67,7 @@ export default class ChartGraphic extends CanvasComponent {
                         appeared,
                         disappeared,
                         changed,
-                    } = ChartGraphic.getLineSetChangeState(setName, oldLinesSet, currentLinesSet);
-
-                    if (changed) {
-                        const { color } = currSet;
-
-                        (currSet.lines || []).forEach((line, index) => {
-                            const rgbColor = hexToRgb(color);
-                            const path = new Path2D();
-
-                            if (prevSet.lines[index]) {
-                                const oldLine = prevSet.lines[index];
-
-                                const prevLinePath = new Path2D();
-                                prevLinePath.moveTo(oldLine.x1, oldLine.y1);
-                                prevLinePath.lineTo(oldLine.x2, oldLine.y2);
-                                this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
-                                this.context.stroke(prevLinePath);
-
-                                const deltaY1 = line.y1 - oldLine.y1;
-                                const deltaY2 = line.y2 - oldLine.y2;
-
-                                path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
-                                path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
-
-                                this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
-                                this.context.stroke(path);
-                            } else {
-                                path.moveTo(line.x1, line.y1);
-                                path.lineTo(line.x2, line.y2);
-                            }
-
-                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
-                            this.context.stroke(path);
-                        });
-
-                        return;
-                    }
+                    } = ChartGraphic.getLineSetChangeState(setName, oldLinesSet, currentLinesSet, lastChangeEvent.type);
 
                     if (appeared) {
                         const { color } = currSet;
@@ -137,7 +103,54 @@ export default class ChartGraphic extends CanvasComponent {
                             this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
                             this.context.stroke(path);
                         });
+
+                        return;
                     }
+
+                    if (changed) {
+                        this.context.strokeStyle = currSet.color;
+
+                        (currSet.lines || []).forEach((line) => {
+                            const path = new Path2D();
+
+                            path.moveTo(line.x1, line.y1);
+                            path.lineTo(line.x2, line.y2);
+
+                            this.context.stroke(path);
+                        });
+
+                        return;
+                    }
+
+                    (currSet.lines || []).forEach((line, index) => {
+                        const rgbColor = hexToRgb(currSet.color);
+                        const path = new Path2D();
+
+                        if (prevSet.lines[index]) {
+                            const oldLine = prevSet.lines[index];
+
+                            const prevLinePath = new Path2D();
+                            prevLinePath.moveTo(oldLine.x1, oldLine.y1);
+                            prevLinePath.lineTo(oldLine.x2, oldLine.y2);
+                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(1 - progress).toFixed(2)})`;
+                            this.context.stroke(prevLinePath);
+
+                            const deltaY1 = line.y1 - oldLine.y1;
+                            const deltaY2 = line.y2 - oldLine.y2;
+
+                            path.moveTo(line.x1, line.y1 - ((1 - progress) * deltaY1));
+                            path.lineTo(line.x2, line.y2 - ((1 - progress) * deltaY2));
+
+                            this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
+                            this.context.stroke(path);
+                        } else {
+                            path.moveTo(line.x1, line.y1);
+                            path.lineTo(line.x2, line.y2);
+                        }
+
+                        this.context.strokeStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${(progress).toFixed(2)})`;
+                        this.context.stroke(path);
+                    });
                 });
             },
         });
@@ -150,14 +163,15 @@ export default class ChartGraphic extends CanvasComponent {
         return Object.keys(resultMap);
     }
 
-    static getLineSetChangeState(setName, prevState, currState) {
+    static getLineSetChangeState(setName, prevState, currState, eventType) {
+        const { APPEARED, DISAPPEARED, SHIFTED, STRETCHED } = DataChangeEvent.EventTypes;
         const prevSet = (prevState || []).find(({ name }) => name === setName);
         const currSet = (currState || []).find(({ name }) => name === setName);
 
         return {
-            appeared: !prevSet && !!currSet,
-            disappeared: prevSet && !currSet,
-            changed: !!prevSet && !!currSet,
+            appeared: !prevSet && !!currSet && eventType === APPEARED,
+            disappeared: prevSet && !currSet && eventType === DISAPPEARED,
+            changed: [SHIFTED, STRETCHED].includes(eventType),
             prevSet,
             currSet,
         };

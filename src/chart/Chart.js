@@ -35,14 +35,13 @@ export default class Chart extends CanvasComponent {
         this.appendChild(this.chartPopover);
     }
 
-    onDataChanged(data) {
-        this.data = data;
+    onDataChanged(event) {
+        const lineSets = getLineSets(event.data, this.element.width, this.element.height, this.props.options);
+        const axes = getAxes(event.data, this.element.width, this.element.height, this.props.options, lineSets);
 
-        const lineSets = getLineSets(this.data, this.element.width, this.element.height, this.props.options);
-        const axes = getAxes(this.data, this.element.width, this.element.height, this.props.options, lineSets);
-
+        this.data = event.data;
         this.chartGrid.onAxesChanged(axes);
-        this.chartGraphic.onLineSetsChanged(lineSets);
-        this.chartPopover.onLineSetsChanged(lineSets);
+        this.chartGraphic.onLineSetsChanged(lineSets, event);
+        this.chartPopover.onLineSetsChanged(lineSets, event);
     }
 }

@@ -24,8 +24,31 @@ export default class ChartWidget extends Component {
         this.render();
     }
 
-    destroy() {
-        window.removeEventListener('resize', this.onWindowResize);
+    onOptionsChanged(newOptions) {
+        this.state.originalOptions = newOptions;
+        this.props.options = newOptions;
+        this.props.options = ChartWidget.getOptions(this.props.options, this.state.originalOptions);
+
+        this.chart.onOptionsChanged(this.props.options);
+        this.legend.onOptionsChanged(this.props.options);
+        this.buttonsPanel.onOptionsChanged(this.props.options);
+
+        this.render();
+    }
+
+    render() {
+        const { options } = this.props;
+
+        this.title.innerText = options.title.value;
+        this.title.style.fontFamily = 'Arial';
+        this.title.style.color = options.title.color;
+
+        this.chartElement.style.border = `1px solid ${options.primaryChartColor}`;
+        this.legendElement.style.border = `1px solid ${options.primaryChartColor}`;
+
+        this.chart.render();
+        this.legend.render();
+        this.buttonsPanel.render();
     }
 
     setupComponents(options, data) {
@@ -56,17 +79,21 @@ export default class ChartWidget extends Component {
         this.legend = new ChartLegend(this.legendElement, {
             data,
             options,
-            onDataChange: (data) => {
-                this.chart.onDataChanged(data);
+            onDataChange: (event) => {
+                this.chart.onDataChanged(event);
             }
         });
         this.buttonsPanel = new CheckboxPanel(this.buttonsPanelElement, {
             data,
             options,
-            onDataChange: (data) => {
-                this.legend.onDataChanged(data);
+            onDataChange: (event) => {
+                this.legend.onDataChanged(event);
             }
         });
+    }
+
+    destroy() {
+        window.removeEventListener('resize', this.onWindowResize);
     }
 
     static getOptions(options, originalOptions) {
@@ -111,32 +138,5 @@ export default class ChartWidget extends Component {
         canvas.style.display = 'block';
 
         return canvas;
-    }
-
-    onOptionsChanged(newOptions) {
-        this.state.originalOptions = newOptions;
-        this.props.options = newOptions;
-        this.props.options = ChartWidget.getOptions(this.props.options, this.state.originalOptions);
-
-        this.chart.onOptionsChanged(this.props.options);
-        this.legend.onOptionsChanged(this.props.options);
-        this.buttonsPanel.onOptionsChanged(this.props.options);
-
-        this.render();
-    }
-
-    render() {
-        const { options } = this.props;
-
-        this.title.innerText = options.title.value;
-        this.title.style.fontFamily = 'Arial';
-        this.title.style.color = options.title.color;
-
-        this.chartElement.style.border = `1px solid ${options.primaryChartColor}`;
-        this.legendElement.style.border = `1px solid ${options.primaryChartColor}`;
-
-        this.chart.render();
-        this.legend.render();
-        this.buttonsPanel.render();
     }
 }

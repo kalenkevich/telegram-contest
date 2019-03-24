@@ -7,7 +7,7 @@ export default class ChartLegend extends CanvasComponent {
     init() {
         this.data = this.props.data;
 
-        const lineSets = this.getLineSets();
+        const lineSets = getLineSets(this.data, this.element.width, this.element.height, this.props.options);
 
         this.activeArea = new ChartLegendActiveArea(this.element, {
             ...this.props,
@@ -23,16 +23,11 @@ export default class ChartLegend extends CanvasComponent {
         this.appendChild(this.activeArea);
     }
 
-    onDataChanged(data) {
-        this.data = data;
+    onDataChanged(event) {
+        const lineSets = getLineSets(event.data, this.element.width, this.element.height, this.props.options);
 
-        const lineSets = this.getLineSets();
-
-        this.activeArea.onDataChanged(data);
-        this.backgroundChart.onLineSetsChanged(lineSets);
-    }
-
-    getLineSets() {
-        return getLineSets(this.data, this.element.width, this.element.height, this.props.options);
+        this.data = event.data;
+        this.activeArea.onDataChanged(event);
+        this.backgroundChart.onLineSetsChanged(lineSets, event);
     }
 }

@@ -1,6 +1,7 @@
-import { getScale, isLineIntersectRectangle, throttle, hexToRgb, isEqual } from '../utils';
+import { getScale, isLineIntersectRectangle, throttle, hexToRgb } from '../utils';
 import { THROTTLE_TIME_FOR_MOUSE_MOVE } from '../contansts';
 import CanvasComponent from '../base/CanvasComponent';
+import DataChangeEvent from '../base/DataChangeEvent';
 
 export default class ChartLegendActiveArea extends CanvasComponent {
     init() {
@@ -24,7 +25,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         this.element.addEventListener("touchstart", this.onMouseDown, { passive: true });
         this.element.addEventListener("mousemove", this.onMouseMove);
 
-        this.onActiveDataChange();
+        this.onActiveDataChange(DataChangeEvent.EventTypes.STRETCHED);
     }
 
     destroy() {
@@ -78,7 +79,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
 
                 this.state.dim.width += this.state.pos.x - newPosX;
                 this.state.pos.x = newPosX;
-                this.onActiveDataChange();
+                this.onActiveDataChange(DataChangeEvent.EventTypes.STRETCHED);
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
@@ -105,7 +106,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                 }
 
                 this.state.dim.width = newPosX - this.state.pos.x;
-                this.onActiveDataChange();
+                this.onActiveDataChange(DataChangeEvent.EventTypes.STRETCHED);
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
 
             this.element.addEventListener("mousemove", onMouseMove);
@@ -131,7 +132,7 @@ export default class ChartLegendActiveArea extends CanvasComponent {
                     this.state.pos.x = this.element.width / pixelRatio - this.state.dim.width;
                 }
 
-                this.onActiveDataChange();
+                this.onActiveDataChange(DataChangeEvent.EventTypes.SHIFTED);
             }, THROTTLE_TIME_FOR_MOUSE_MOVE);
             this.element.addEventListener("mousemove", onMouseMove);
             this.element.addEventListener("touchmove", onMouseMove, { passive: true });
@@ -146,21 +147,23 @@ export default class ChartLegendActiveArea extends CanvasComponent {
         }
     }
 
-    onDataChanged(data) {
-        this.state.data = data;
+    onDataChanged(event) {
+        this.state.data = event.data;
 
-        this.onActiveDataChange();
+        this.onActiveDataChange(event.type);
 
         this.prevState.data = this.state.data;
     }
 
-    onActiveDataChange() {
+    onActiveDataChange(eventType) {
         this.rerender();
 
-        this.props.onDataChange({
+        const newData = {
             ...this.state.data,
             columns: ChartLegendActiveArea.getActiveColumns(this.state.data, this.state.pos, this.state.dim, this.element, this.props),
-        });
+        };
+
+        this.props.onDataChange(new DataChangeEvent(eventType, newData, this.state.data));
 
         this.prevState.pos = this.state.pos;
         this.prevState.dim = this.state.dim;

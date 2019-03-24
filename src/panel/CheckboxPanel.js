@@ -1,4 +1,5 @@
 import Component from '../base/Component';
+import DataChangeEvent from '../base/DataChangeEvent';
 
 export const checkboxStyles = 'opacity: 0;height: 0;width: 0;cursor: pointer;';
 export const checkmarkStyles = (color1, color2) => `position: relative;height: 25px;width: 25px;border-radius: 50%;border: 2px solid ${color1};background-color: ${color2};transition: background-color 100ms;`;
@@ -35,20 +36,24 @@ export default class CheckboxPanel extends Component {
                 const onClick = (event) => {
                     if (event.target.checked) {
                         const column = (this.props.data.columns || []).find(column => column[0] === name);
+                        const newData = {
+                            ...data,
+                            columns: [...data.columns, column],
+                        };
 
-                        data.columns.push(column);
+                        this.props.onDataChange(new DataChangeEvent(DataChangeEvent.EventTypes.APPEARED, newData, {...data}));
 
-                        this.props.onDataChange(data);
-
+                        data = newData;
                         checkmark.style = checkmarkStyles(color, color);
                     } else {
-                        data = {
+                        const newData = {
                             ...data,
                             columns: (data.columns || []).filter(column => column[0] !== name),
                         };
 
-                        this.props.onDataChange(data);
+                        this.props.onDataChange(new DataChangeEvent(DataChangeEvent.EventTypes.DISAPPEARED, newData, {...data}));
 
+                        data = newData;
                         checkmark.style = checkmarkStyles(color, 'transparent');
                     }
                 };
